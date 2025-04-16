@@ -1,0 +1,7 @@
+{
+  "setting_id": "57b64fdc-40f5-4b21-a1d8-66ed5e286a5a",
+  "synopses": {
+    "error": "正しい形式で取得できませんでした",
+    "raw_response": "エラーが発生しました: 400 Client Error: Bad Request for url: https://api.x.ai/v1/chat/completions"
+  }
+}

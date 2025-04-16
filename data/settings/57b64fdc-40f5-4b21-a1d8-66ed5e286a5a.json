@@ -1,0 +1,4 @@
+{
+  "error": "正しい形式で取得できませんでした",
+  "raw_response": "エラーが発生しました: Models.generate_content() got an unexpected keyword argument 'generation_config'"
+}
