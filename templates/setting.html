@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定ジェネレーター | 官能小説ジェネレーター</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>設定ジェネレーター</h1>
+            <nav>
+                <a href="{{ url_for('index') }}">ホーム</a>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="form-section">
+                <h2>官能小説の設定を生成</h2>
+                <p>登場人物や舞台設定など、小説の基本設定を生成します。</p>
+                
+                <form action="{{ url_for('setting') }}" method="post">
+                    <div class="form-group">
+                        <label for="model">使用するAIモデル:</label>
+                        <select id="model" name="model" required>
+                            <option value="grok">grok-3-beta (X.AI)</option>
+                            <option value="gemini" selected>gemini-2.5-pro-preview (Google)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="setting_type">設定タイプ:</label>
+                        <select id="setting_type" name="setting_type" required>
+                            <option value="一般">一般的な恋愛</option>
+                            <option value="オフィス">オフィスロマンス</option>
+                            <option value="歴史">歴史/時代物</option>
+                            <option value="ファンタジー">ファンタジー世界</option>
+                            <option value="SM">SM/調教</option>
+                            <option value="NTR">寝取られ</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="additional_details">追加設定 (任意):</label>
+                        <textarea id="additional_details" name="additional_details" rows="4" placeholder="具体的な設定の要望や、特定のシチュエーションなどを入力してください"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">設定を生成する</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 官能小説ジェネレーター</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

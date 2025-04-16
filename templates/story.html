@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成された小説 | 官能小説ジェネレーター</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>生成された小説</h1>
+            <nav>
+                <a href="{{ url_for('index') }}">ホーム</a>
+                <a href="{{ url_for('setting') }}">設定に戻る</a>
+                <a href="{{ url_for('synopsis') }}">あらすじに戻る</a>
+            </nav>
+        </header>
+        
+        <main>
+            {% if story %}
+                <section class="story-section">
+                    <div class="story-meta">
+                        <h2>第{{ story.chapter }}章</h2>
+                        <div class="story-actions">
+                            <button id="saveStory" class="btn-secondary">小説を保存</button>
+                            <form action="{{ url_for('story') }}" method="post" style="display: inline;">
+                                <input type="hidden" name="synopsis_index" value="{{ request.form.get('synopsis_index', 0) }}">
+                                <input type="hidden" name="model" value="{{ request.form.get('model', 'gemini') }}">
+                                <input type="hidden" name="style" value="{{ request.form.get('style', 'murakami') }}">
+                                <input type="hidden" name="chapter" value="{{ story.chapter|int + 1 }}">
+                                <button type="submit" class="btn-primary">次の章を生成</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="story-content">
+                        {{ story.text|nl2br }}
+                    </div>
+                </section>
+            {% elif synopses %}
+                <section class="synopses-section">
+                    <h2>あらすじを選択して小説を生成</h2>
+                    <p>以下から好みのあらすじを選択してください。</p>
+                    
+                    <div class="synopses-list">
+                        {% for synopsis in synopses %}
+                            <div class="synopsis-card">
+                                <h3>{{ synopsis.title }}</h3>
+                                <div class="synopsis-content">
+                                    <p><strong>導入部:</strong> {{ synopsis.導入部 }}</p>
+                                    <p><strong>展開:</strong> {{ synopsis.展開 }}</p>
+                                    <p><strong>クライマックス:</strong> {{ synopsis.クライマックス }}</p>
+                                    <p><strong>結末:</strong> {{ synopsis.結末 }}</p>
+                                </div>
+                                <form action="{{ url_for('story') }}" method="post">
+                                    <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
+                                    <div class="form-group">
+                                        <label for="model-{{ loop.index }}">AIモデル:</label>
+                                        <select id="model-{{ loop.index }}" name="model" required>
+                                            <option value="grok">grok-3-beta (X.AI)</option>
+                                            <option value="gemini" selected>gemini-2.5-pro-preview (Google)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="style-{{ loop.index }}">文体スタイル:</label>
+                                        <select id="style-{{ loop.index }}" name="style" required>
+                                            <option value="murakami" selected>村上龍風</option>
+                                            <option value="dan">団鬼六風</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="chapter-{{ loop.index }}">章:</label>
+                                        <select id="chapter-{{ loop.index }}" name="chapter" required>
+                                            <option value="1" selected>第1章 (導入部)</option>
+                                            <option value="2">第2章 (展開部)</option>
+                                            <option value="3">第3章 (クライマックスと結末)</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn-secondary">このあらすじで小説を生成</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% else %}
+                <p>あらすじが選択されていません。<a href="{{ url_for('synopsis') }}">あらすじページに戻る</a></p>
+            {% endif %}
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 官能小説ジェネレーター</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

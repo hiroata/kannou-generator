@@ -1,0 +1,4 @@
+{
+  "error": "正しい形式で取得できませんでした",
+  "raw_response": "エラーが発生しました: 400 Client Error: Bad Request for url: https://api.x.ai/v1/chat/completions"
+}

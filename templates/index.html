@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>官能小説ジェネレーター</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>官能小説ジェネレーター</h1>
+            <p>AI活用で村上龍・団鬼六の文体を再現</p>
+        </header>
+        
+        <main>
+            <section class="intro">
+                <h2>魅力的な官能小説を生成</h2>
+                <p>このアプリは、AIを使用して小説を自動生成します。設定を入力し、あらすじを選び、小説を生成できます。</p>
+                <p>村上龍風の都会的で生々しい文体と、団鬼六風のSM描写に特化した文体を切り替えられます。</p>
+            </section>
+            
+            <section class="features">
+                <h2>主な機能</h2>
+                <div class="feature-grid">
+                    <div class="feature">
+                        <h3>設定生成</h3>
+                        <p>登場人物や舞台設定など、小説の骨格となる設定を生成します。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>あらすじ生成</h3>
+                        <p>設定に基づいて複数のあらすじを提案します。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>小説生成</h3>
+                        <p>選んだあらすじをもとに官能小説を生成します。</p>
+                    </div>
+                    <div class="feature">
+                        <h3>文体切替</h3>
+                        <p>村上龍風と団鬼六風の文体を選択できます。</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="cta">
+                <a href="{{ url_for('setting') }}" class="btn-primary">今すぐ小説を作成する</a>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 官能小説ジェネレーター</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
