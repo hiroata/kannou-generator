@@ -1,24 +1,28 @@
 import os
 import json
 import uuid
-from api import grok_api, gemini_api
+from api import grok_api
 from services import setting_service, synopsis_service
 from config import WRITING_STYLES
 
-def generate_story(synopsis_id, synopsis_index=0, model="gemini", style="murakami", chapter=1):
+def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami", chapter=1, direction=""):
     """
     あらすじに基づいて小説を生成する
     
     Args:
         synopsis_id (str): あらすじID
         synopsis_index (int): あらすじのインデックス
-        model (str): 使用するモデル ('grok' または 'gemini')
+        model (str): 使用するモデル ('grok' のみサポート)
         style (str): 文体スタイル ('murakami' または 'dan')
         chapter (int): 生成する章番号
+        direction (str): 次の章の方向性に関する指示（オプション）
     
     Returns:
         dict: 生成された小説
     """
+    # モデルの強制
+    model = "grok"  # 現在はgrokのみサポート
+    
     # あらすじの読み込み
     synopses_data = synopsis_service.load_synopsis(synopsis_id)
     if not synopses_data:
@@ -29,7 +33,13 @@ def generate_story(synopsis_id, synopsis_index=0, model="gemini", style="murakam
     setting_data = setting_service.load_setting(setting_id)
     
     # 選択されたあらすじ
-    selected_synopsis = synopses_data.get("synopses", [])[synopsis_index]
+    synopses = synopses_data.get("synopses", [])
+    
+    # あらすじが存在し、インデックスが範囲内かチェック
+    if not isinstance(synopses, list) or synopsis_index >= len(synopses):
+        return {"error": "指定されたあらすじが存在しません"}
+        
+    selected_synopsis = synopses[synopsis_index]
     
     # 文体の選択
     writing_style = WRITING_STYLES.get(style, WRITING_STYLES["murakami"])
@@ -37,15 +47,27 @@ def generate_story(synopsis_id, synopsis_index=0, model="gemini", style="murakam
     # 章に応じたプロンプトの作成
     if chapter == 1:
         story_part = "導入部。物語を設定し、登場人物を紹介し、初期の性的緊張を確立します。"
+        target_length = "700文字から1000文字"
     elif chapter == 2:
         story_part = "展開部。性的緊張が高まり、関係性が深まり、官能的なシーンが展開します。"
+        target_length = "700文字から1000文字"
     elif chapter == 3:
         story_part = "クライマックスと結末。物語のピークとなる官能シーンと、その後の展開を描写します。"
+        target_length = "800文字から1200文字"
     else:
         story_part = "追加エピソード。メインストーリーに追加される官能的なエピソードです。"
+        target_length = "800文字から1200文字"
+    
+    # 前章からの方向性が指定されているかチェック
+    direction_instruction = ""
+    if direction:
+        direction_instruction = f"""
+        【重要】以下のユーザーからの指示に従って内容を展開してください：
+        {direction}
+        """
     
     prompt = f"""
-    あなたは官能小説の作家です。以下の設定とあらすじに基づいて、{writing_style}で小説の第{chapter}章を書いてください。
+    あなたは18禁官能小説の作家です。以下の設定とあらすじに基づいて、{writing_style}で小説の第{chapter}章を書いてください。
     これは{story_part}
     
     設定:
@@ -54,20 +76,26 @@ def generate_story(synopsis_id, synopsis_index=0, model="gemini", style="murakam
     あらすじ:
     {json.dumps(selected_synopsis, ensure_ascii=False)}
     
-    小説は約2000-3000文字で、以下の点に注意してください：
-    - 官能的な描写は詳細に
-    - 臨場感のある会話と心理描写
-    - 読者を引き込む展開
-    - 選択した文体の特徴を強く反映させる
+    {direction_instruction}
     
-    章のタイトルをつけて、小説を執筆してください。
+    小説は{target_length}程度で、以下の点に注意してください：
+    1. 官能的な描写は非常に詳細かつ直接的に。性器の名称や卑猥な表現を遠慮なく使用する。
+    2. 登場人物の会話には「あぁん」「んっ」などの喘ぎ声や「おまんこ」「ちんぽ」などの淫語を積極的に盛り込む。
+    3. キャラクターの心理描写と身体的な反応を鮮明に表現する。
+    4. 臨場感のある会話と性的な緊張感を醸成する。
+    5. 読者を引き込む官能的な展開を心がける。
+    6. 選択した文体の特徴を強く反映させる。
+    7. 日本の成人向け同人誌のような過激で露骨な性描写を含める。
+    
+    章のタイトルをつけて、小説を執筆してください。改行を適切に使用し、読みやすくしてください。
     """
     
-    # モデル選択
-    if model.lower() == "grok":
-        story_text = grok_api.generate_text(prompt, max_tokens=3000)
-    else:
-        story_text = gemini_api.generate_text(prompt, max_tokens=3000)
+    # Grok API呼び出し（temperatureを上げて創造性を高める）
+    story_text = grok_api.generate_text(prompt, max_tokens=4000, temperature=0.8)
+    
+    # エラーチェック
+    if story_text.startswith("エラーが発生しました"):
+        return {"error": story_text, "chapter": chapter}
     
     # 小説の保存
     story_id = str(uuid.uuid4())
@@ -78,6 +106,7 @@ def generate_story(synopsis_id, synopsis_index=0, model="gemini", style="murakam
         "chapter": chapter,
         "style": style,
         "model": model,
+        "direction": direction,
         "text": story_text
     })
     

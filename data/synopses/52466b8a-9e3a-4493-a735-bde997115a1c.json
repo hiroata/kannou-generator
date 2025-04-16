@@ -1,0 +1,12 @@
+{
+  "setting_id": "2642a945-573b-43fd-b56d-e7b495c6f2e0",
+  "synopses": [
+    {
+      "title": "JSONパースエラー",
+      "導入部": "APIからの応答をJSONとして解析できませんでした: Unterminated string starting at: line 21 column 17 (char 2646)",
+      "展開": "",
+      "クライマックス": "",
+      "結末": ""
+    }
+  ]
+}

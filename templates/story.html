@@ -5,6 +5,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>生成された小説 | 官能小説ジェネレーター</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .next-chapter-direction {
+            width: 100%;
+            min-height: 100px;
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        
+        .next-chapter-form {
+            margin-top: 10px;
+            background-color: #f8f8f8;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .next-chapter-form h4 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .next-chapter-options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .chapter-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .story-content {
+            line-height: 1.8;
+            font-size: 1.1em;
+            white-space: pre-line;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .enhancement-options {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f4f8;
+            border-radius: 8px;
+            border-left: 5px solid #4285F4;
+        }
+        
+        .enhancement-options h4 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .enhancement-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .enhancement-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .enhancement-checkboxes input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .enhancement-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .sd-prompts-generator {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f0f4;
+            border-radius: 8px;
+            border-left: 5px solid #e91e63;
+        }
+        
+        .sd-prompts-generator h4 {
+            color: #c2185b;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading-indicator img {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .enhanced-flag {
+            background-color: #4CAF50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .direction-presets {
+            margin: 15px 0;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .direction-presets h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .direction-presets h6 {
+            margin: 10px 0;
+            color: #e91e63;
+            font-weight: 600;
+        }
+
+        .preset-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .preset-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .preset-option {
+            background-color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .preset-option:hover {
+            background-color: #f1f1f1;
+            border-color: #ced4da;
+        }
+
+        .preset-option.selected {
+            background-color: #e91e63;
+            color: white;
+            border-color: #e91e63;
+        }
+
+        @media (max-width: 768px) {
+            .preset-options {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,21 +198,172 @@
             {% if story %}
                 <section class="story-section">
                     <div class="story-meta">
-                        <h2>第{{ story.chapter }}章</h2>
+                        <h2>第{{ story.chapter }}章 {% if enhanced or story.enhanced %}<span class="enhanced-flag">強化済み</span>{% endif %}</h2>
                         <div class="story-actions">
                             <button id="saveStory" class="btn-secondary">小説を保存</button>
-                            <form action="{{ url_for('story') }}" method="post" style="display: inline;">
-                                <input type="hidden" name="synopsis_index" value="{{ request.form.get('synopsis_index', 0) }}">
-                                <input type="hidden" name="model" value="{{ request.form.get('model', 'gemini') }}">
-                                <input type="hidden" name="style" value="{{ request.form.get('style', 'murakami') }}">
-                                <input type="hidden" name="chapter" value="{{ story.chapter|int + 1 }}">
-                                <button type="submit" class="btn-primary">次の章を生成</button>
-                            </form>
                         </div>
                     </div>
                     
                     <div class="story-content">
                         {{ story.text|nl2br }}
+                    </div>
+                    
+                    <!-- ストーリー強化オプション -->
+                    <div class="enhancement-options">
+                        <h4>ストーリーを深化させる</h4>
+                        <p>以下のオプションを選択して、物語の質をさらに高めることができます。</p>
+                        
+                        <form action="{{ url_for('enhance_story') }}" method="post">
+                            <input type="hidden" name="story_id" value="{{ story.id }}">
+                            
+                            <div class="enhancement-checkboxes">
+                                <label><input type="checkbox" name="enhance_psychology" checked> キャラクター心理を深める</label>
+                                <label><input type="checkbox" name="enhance_emotions" checked> 感情の起伏を強化</label>
+                                <label><input type="checkbox" name="enhance_sensory" checked> 五感表現を豊かに</label>
+                                <label><input type="checkbox" name="enhance_voice" checked> キャラクターの声を一貫化</label>
+                                <label><input type="checkbox" name="add_psychological_themes"> 心理的テーマを追加</label>
+                            </div>
+                            
+                            <div id="loading-enhance" class="loading-indicator">
+                                <p>小説を強化中です。しばらくお待ちください...</p>
+                                <div class="spinner"></div>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary">ストーリーを深化させる</button>
+                        </form>
+                    </div>
+                    
+                    <!-- SDプロンプト生成 -->
+                    <div class="sd-prompts-generator">
+                        <h4>イラスト用プロンプト生成</h4>
+                        <p>Stable Diffusion用の画像生成プロンプトを作成します。</p>
+                        
+                        <form action="{{ url_for('generate_scene_prompts') }}" method="post">
+                            <input type="hidden" name="story_id" value="{{ story.id }}">
+                            
+                            <div class="form-group">
+                                <label for="num-scenes">生成するシーン数:</label>
+                                <select id="num-scenes" name="num_scenes">
+                                    <option value="1">1シーン</option>
+                                    <option value="3" selected>3シーン</option>
+                                    <option value="5">5シーン</option>
+                                </select>
+                            </div>
+                            
+                            <div id="loading-prompts" class="loading-indicator">
+                                <p>プロンプトを生成中です。しばらくお待ちください...</p>
+                                <div class="spinner"></div>
+                            </div>
+                            
+                            <button type="submit" class="btn-secondary">SD用プロンプトを生成</button>
+                        </form>
+                    </div>
+                    
+                    <!-- 次の章のフォーム -->
+                    <div class="next-chapter-form">
+                        <h4>次の章の方向性を指定</h4>
+                        <form action="{{ url_for('story') }}" method="post">
+                            <input type="hidden" name="synopsis_index" value="{{ synopsis_index|default(0) }}">
+                            <input type="hidden" name="style" value="{{ style|default('murakami') }}">
+                            <input type="hidden" name="chapter" value="{{ story.chapter|int + 1 }}">
+                            
+                            <div class="next-chapter-options">
+                                <label for="style-select">文体スタイル:</label>
+                                <select id="style-select" name="style" required>
+                                    <option value="murakami" {% if style == 'murakami' %}selected{% endif %}>村上龍風</option>
+                                    <option value="dan" {% if style == 'dan' %}selected{% endif %}>団鬼六風</option>
+                                </select>
+                            </div>
+                            
+                            <div class="direction-presets">
+                                <h5>指示プリセット（複数選択可）:</h5>
+                                
+                                <div class="preset-categories">
+                                    <div class="preset-category">
+                                        <h6>エロティック要素の強化:</h6>
+                                        <div class="preset-options">
+                                            <div class="preset-option" data-text="キャラクターのセリフをより卑猥にして、淫語や喘ぎ声をもっと具体的に長く書いてください。性器の名称や猥褻な表現を遠慮なく使ってください。">
+                                                <span>淫語セリフ強化</span>
+                                            </div>
+                                            <div class="preset-option" data-text="性的描写をより詳細に、身体の反応や感覚をより具体的に描写してください。解剖学的な詳細も含めてください。">
+                                                <span>性的描写の詳細化</span>
+                                            </div>
+                                            <div class="preset-option" data-text="性的緊張をさらに高め、より過激なシーンに発展させてください。エロスをエスカレートさせてください。">
+                                                <span>官能的エスカレーション</span>
+                                            </div>
+                                            <div class="preset-option" data-text="社会的タブーやより背徳的な関係性を展開してください。禁断の関係による罪悪感と快感を描写してください。">
+                                                <span>禁断の関係性</span>
+                                            </div>
+                                            <div class="preset-option" data-text="恥ずかしさと快感を同時に感じる葛藤をより強調してください。羞恥心と性的興奮の矛盾を描写してください。">
+                                                <span>羞恥と快楽の拮抗</span>
+                                            </div>
+                                            <div class="preset-option" data-text="支配と服従の力関係をより明確に描写してください。命令や屈服のシーンをより具体的に書いてください。">
+                                                <span>支配/服従の強調</span>
+                                            </div>
+                                            <div class="preset-option" data-text="五感を活用した官能的描写を増やしてください。匂い、味、触感、音などをより具体的に表現してください。">
+                                                <span>五感表現の強化</span>
+                                            </div>
+                                            <div class="preset-option" data-text="キャラクターの内面にある性的空想や妄想、夢を描写してください。現実と空想の境界を曖昧にしてください。">
+                                                <span>性的妄想シーン</span>
+                                            </div>
+                                            <div class="preset-option" data-text="公共の場や第三者の目がある状況での性的緊張を描写してください。露出や発見されるリスクによる興奮を強調してください。">
+                                                <span>露出的要素</span>
+                                            </div>
+                                            <div class="preset-option" data-text="卑猥な言葉による精神的興奮を詳細に描写してください。言葉責めのシーンを入れ、言葉がもたらす心理的影響を強調してください。">
+                                                <span>言葉責め</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="preset-category">
+                                        <h6>ストーリーの深化:</h6>
+                                        <div class="preset-options">
+                                            <div class="preset-option" data-text="キャラクターの内面的な矛盾や葛藤をより深く描写してください。欲望と理性の対立を掘り下げてください。">
+                                                <span>心理的葛藤</span>
+                                            </div>
+                                            <div class="preset-option" data-text="登場人物の過去の傷や心的外傷を掘り下げ、現在の行動や感情との関連を描写してください。">
+                                                <span>過去のトラウマ</span>
+                                            </div>
+                                            <div class="preset-option" data-text="性的関係を超えた感情的な絆の発展を描写してください。肉体関係と感情的つながりの関係性を掘り下げてください。">
+                                                <span>感情的つながり</span>
+                                            </div>
+                                            <div class="preset-option" data-text="読者の予想を裏切るようなプロットの転換や意外な展開を入れてください。物語に意外性をもたせてください。">
+                                                <span>予想外の展開</span>
+                                            </div>
+                                            <div class="preset-option" data-text="経験を通じた登場人物の内面的変化を描写してください。キャラクターの成長や価値観の変化を表現してください。">
+                                                <span>キャラクターの成長</span>
+                                            </div>
+                                            <div class="preset-option" data-text="周囲からの視線や社会的立場がもたらす緊張を描写してください。社会的規範と個人の欲望の衝突を表現してください。">
+                                                <span>社会的影響</span>
+                                            </div>
+                                            <div class="preset-option" data-text="表面的な行動と内面の思いの不一致を強調してください。本心と言動のギャップを描写してください。">
+                                                <span>内面と外面の乖離</span>
+                                            </div>
+                                            <div class="preset-option" data-text="登場人物間の力関係や感情の変化を描写してください。関係性の流動性や複雑さを表現してください。">
+                                                <span>関係性の変化</span>
+                                            </div>
+                                            <div class="preset-option" data-text="性的快楽の代償として支払われる犠牲を描写してください。行為がもたらす代償や痛みを表現してください。">
+                                                <span>代償や犠牲</span>
+                                            </div>
+                                            <div class="preset-option" data-text="自己許容や相互理解による心理的救済のテーマを描写してください。葛藤からの解放や自己受容の過程を表現してください。">
+                                                <span>許しと救済</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <textarea id="next-chapter-direction" name="next_chapter_direction" class="next-chapter-direction" placeholder="次の章でどのような展開を希望するか入力できます。上のオプションから選択するか、自由に指示を書いてください。より卑猥な表現や、特定のシチュエーションなども指定できます。（入力は任意です）"></textarea>
+                            
+                            <div id="loading-next-chapter" class="loading-indicator">
+                                <p>次の章を生成中です。しばらくお待ちください...</p>
+                                <div class="spinner"></div>
+                            </div>
+                            
+                            <div class="chapter-actions">
+                                <button type="submit" class="btn-primary">次の章を生成</button>
+                            </div>
+                        </form>
                     </div>
                 </section>
             {% elif synopses %}
@@ -56,27 +384,13 @@
                                 <form action="{{ url_for('story') }}" method="post">
                                     <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
                                     <div class="form-group">
-                                        <label for="model-{{ loop.index }}">AIモデル:</label>
-                                        <select id="model-{{ loop.index }}" name="model" required>
-                                            <option value="grok">grok-3-beta (X.AI)</option>
-                                            <option value="gemini" selected>gemini-2.5-pro-preview (Google)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
                                         <label for="style-{{ loop.index }}">文体スタイル:</label>
                                         <select id="style-{{ loop.index }}" name="style" required>
                                             <option value="murakami" selected>村上龍風</option>
                                             <option value="dan">団鬼六風</option>
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="chapter-{{ loop.index }}">章:</label>
-                                        <select id="chapter-{{ loop.index }}" name="chapter" required>
-                                            <option value="1" selected>第1章 (導入部)</option>
-                                            <option value="2">第2章 (展開部)</option>
-                                            <option value="3">第3章 (クライマックスと結末)</option>
-                                        </select>
-                                    </div>
+                                    <input type="hidden" name="chapter" value="1">
                                     <button type="submit" class="btn-secondary">このあらすじで小説を生成</button>
                                 </form>
                             </div>
@@ -94,5 +408,87 @@
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 小説保存ボタンの処理
+        document.getElementById('saveStory').addEventListener('click', function() {
+            const storyContent = document.querySelector('.story-content').innerText;
+            
+            // テキストファイルとして保存
+            const blob = new Blob([storyContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '官能小説.txt';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        });
+        
+        // フォーム送信時のローディング表示
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // ボタンを無効化
+                const submitButton = this.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '処理中...';
+                
+                // フォームのアクションに応じたローディング表示
+                if (this.action.includes('enhance_story')) {
+                    document.getElementById('loading-enhance').style.display = 'block';
+                } else if (this.action.includes('generate_scene_prompts')) {
+                    document.getElementById('loading-prompts').style.display = 'block';
+                } else if (this.action.includes('story') && this.querySelector('input[name="chapter"]')) {
+                    document.getElementById('loading-next-chapter').style.display = 'block';
+                }
+            });
+        });
+        
+        // 指示プリセットの選択処理
+        document.addEventListener('DOMContentLoaded', function() {
+            const presetOptions = document.querySelectorAll('.preset-option');
+            const directionTextarea = document.getElementById('next-chapter-direction');
+            
+            presetOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // 選択状態をトグル
+                    this.classList.toggle('selected');
+                    
+                    // 選択されたすべてのオプションのテキストを集める
+                    const selectedOptions = document.querySelectorAll('.preset-option.selected');
+                    let combinedText = '';
+                    
+                    selectedOptions.forEach(selected => {
+                        const text = selected.getAttribute('data-text');
+                        // 文の重複を避ける
+                        if (text && !combinedText.includes(text)) {
+                            combinedText += text + '\n\n';
+                        }
+                    });
+                    
+                    // テキストエリアに設定
+                    directionTextarea.value = combinedText.trim();
+                });
+            });
+        });
+    </script>
+    
+    <style>
+        /* ローディングスピナー */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 10px auto;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </body>
 </html>

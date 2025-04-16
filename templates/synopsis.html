@@ -5,6 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>あらすじジェネレーター | 官能小説ジェネレーター</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .synopsis-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .synopsis-actions form {
+            flex: 1;
+        }
+        
+        .synopsis-actions button {
+            width: 100%;
+        }
+        
+        .auto-actions {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            border-left: 5px solid #4285F4;
+        }
+        
+        .auto-actions p {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -20,7 +51,22 @@
             {% if synopses %}
                 <section class="synopses-section">
                     <h2>生成されたあらすじ</h2>
-                    <p>以下から好みのあらすじを選択してください。</p>
+                    
+                    {% if auto_generated %}
+                        <div class="auto-actions">
+                            <p>あらすじが自動生成されました。このまま小説を生成するか、別のあらすじを生成できます。</p>
+                            <form action="{{ url_for('story') }}" method="post" style="display: inline-block; margin-right: 10px;">
+                                <input type="hidden" name="synopsis_index" value="0">
+                                <input type="hidden" name="style" value="murakami">
+                                <input type="hidden" name="chapter" value="1">
+                                <button type="submit" class="btn-primary">このあらすじで小説を生成</button>
+                            </form>
+                            <form action="{{ url_for('synopsis') }}" method="post" style="display: inline-block;">
+                                <input type="hidden" name="style" value="murakami">
+                                <button type="submit" class="btn-secondary">別のあらすじを生成</button>
+                            </form>
+                        </div>
+                    {% endif %}
                     
                     <div class="synopses-list">
                         {% for synopsis in synopses %}
@@ -32,31 +78,32 @@
                                     <p><strong>クライマックス:</strong> {{ synopsis.クライマックス }}</p>
                                     <p><strong>結末:</strong> {{ synopsis.結末 }}</p>
                                 </div>
-                                <form action="{{ url_for('story') }}" method="post">
+                                
+                                <div class="synopsis-actions">
+                                    <form action="{{ url_for('story') }}" method="post">
+                                        <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
+                                        <input type="hidden" name="style" value="murakami">
+                                        <input type="hidden" name="chapter" value="1">
+                                        <button type="submit" class="btn-primary">このあらすじで小説を生成</button>
+                                    </form>
+                                    
+                                    <form action="{{ url_for('synopsis') }}" method="post">
+                                        <input type="hidden" name="style" value="murakami">
+                                        <button type="submit" class="btn-secondary">あらすじを再生成</button>
+                                    </form>
+                                </div>
+                                
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label for="style-{{ loop.index }}">文体スタイル:</label>
+                                    <select id="style-{{ loop.index }}" name="style" form="story-form-{{ loop.index }}" required>
+                                        <option value="murakami" selected>村上龍風</option>
+                                        <option value="dan">団鬼六風</option>
+                                    </select>
+                                </div>
+                                
+                                <form id="story-form-{{ loop.index }}" action="{{ url_for('story') }}" method="post">
                                     <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
-                                    <div class="form-group">
-                                        <label for="model-{{ loop.index }}">AIモデル:</label>
-                                        <select id="model-{{ loop.index }}" name="model" required>
-                                            <option value="grok">grok-3-beta (X.AI)</option>
-                                            <option value="gemini" selected>gemini-2.5-pro-preview (Google)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="style-{{ loop.index }}">文体スタイル:</label>
-                                        <select id="style-{{ loop.index }}" name="style" required>
-                                            <option value="murakami" selected>村上龍風</option>
-                                            <option value="dan">団鬼六風</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="chapter-{{ loop.index }}">章:</label>
-                                        <select id="chapter-{{ loop.index }}" name="chapter" required>
-                                            <option value="1" selected>第1章 (導入部)</option>
-                                            <option value="2">第2章 (展開部)</option>
-                                            <option value="3">第3章 (クライマックスと結末)</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn-secondary">このあらすじで小説を生成</button>
+                                    <input type="hidden" name="chapter" value="1">
                                 </form>
                             </div>
                         {% endfor %}
@@ -71,32 +118,33 @@
                         <div class="setting-summary">
                             <h3>選択された設定:</h3>
                             <div class="setting-details">
-                                {% if setting.登場人物 %}
+                                {% if setting.characters %}
                                     <div class="characters">
                                         <h4>登場人物:</h4>
                                         <ul>
-                                            {% for character in setting.登場人物 %}
+                                            {% for character in setting.characters %}
                                                 <li>
-                                                    <strong>{{ character.名前 }}</strong> ({{ character.年齢 }}歳)
-                                                    {% if character.身体的特徴 %}- {{ character.身体的特徴 }}{% endif %}
-                                                    {% if character.性格 %}- {{ character.性格 }}{% endif %}
+                                                    <strong>{{ character.name }}</strong> ({{ character.age }}歳)
+                                                    {% if character.physical_features %}- {{ character.physical_features }}{% endif %}
+                                                    {% if character.personality %}- {{ character.personality }}{% endif %}
                                                 </li>
                                             {% endfor %}
                                         </ul>
                                     </div>
                                 {% endif %}
                                 
-                                {% if setting.舞台設定 %}
+                                {% if setting.setting %}
                                     <div class="setting-place">
                                         <h4>舞台設定:</h4>
-                                        <p>{{ setting.舞台設定 }}</p>
+                                        <p>場所: {{ setting.setting.location }}</p>
+                                        <p>時代: {{ setting.setting.era }}</p>
                                     </div>
                                 {% endif %}
                                 
-                                {% if setting.背景状況 %}
+                                {% if setting.background %}
                                     <div class="setting-background">
                                         <h4>背景状況:</h4>
-                                        <p>{{ setting.背景状況 }}</p>
+                                        <p>{{ setting.background.relationship }}</p>
                                     </div>
                                 {% endif %}
                             </div>
@@ -104,14 +152,6 @@
                     {% endif %}
                     
                     <form action="{{ url_for('synopsis') }}" method="post">
-                        <div class="form-group">
-                            <label for="model">使用するAIモデル:</label>
-                            <select id="model" name="model" required>
-                                <option value="grok">grok-3-beta (X.AI)</option>
-                                <option value="gemini" selected>gemini-2.5-pro-preview (Google)</option>
-                            </select>
-                        </div>
-                        
                         <div class="form-group">
                             <label for="style">文体スタイル:</label>
                             <select id="style" name="style" required>

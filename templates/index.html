@@ -5,6 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>官能小説ジェネレーター</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .custom-scenario-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f0f4;
+            border-radius: 8px;
+            border-left: 5px solid #e91e63;
+        }
+        
+        .custom-scenario-container h3 {
+            color: #c2185b;
+            margin-bottom: 15px;
+        }
+        
+        .custom-scenario {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Noto Sans JP', sans-serif;
+            margin-bottom: 15px;
+        }
+        
+        .or-divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .or-divider:before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 1px;
+            background: #ddd;
+            position: absolute;
+            top: 50%;
+            z-index: 1;
+        }
+        
+        .or-divider span {
+            background: #fff;
+            padding: 0 15px;
+            position: relative;
+            z-index: 2;
+            color: #777;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -20,6 +69,26 @@
                 <p>村上龍風の都会的で生々しい文体と、団鬼六風のSM描写に特化した文体を切り替えられます。</p>
             </section>
             
+            <section class="custom-scenario-container">
+                <h3>あなたのシナリオから小説を生成</h3>
+                <p>自分のアイデアを入力して、カスタム小説を生成できます。登場人物や状況を自由に設定してください。</p>
+                
+                <form action="{{ url_for('custom_setting') }}" method="post">
+                    <div class="form-group">
+                        <label for="custom_scenario">あなたのシナリオ:</label>
+                        <textarea id="custom_scenario" name="custom_scenario" class="custom-scenario" placeholder="例: 上京し大学に通う事になった史郎。一人暮らしをする事になり、まずはご近所への挨拶をしようと隣の家に向かった。出てきたのは人妻のめぐりで同郷出身の愛らしい女性。すぐに意気投合し史郎は安心していたが…。一方のめぐりは夫に浮気をされてしかもセックスレスで欲求不満な日々。そこに史郎のようなイケメンが現れ、オマ○コが疼いていた。そしてある日、史郎の家のインターホンが鳴る。警戒しながら覗き穴を覗くと、そこには目をギラギラと輝かせためぐりが笑みを浮かべて立っていて…。"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">このシナリオで小説を生成</button>
+                    </div>
+                </form>
+            </section>
+            
+            <div class="or-divider">
+                <span>または</span>
+            </div>
+            
             <section class="features">
                 <h2>主な機能</h2>
                 <div class="feature-grid">
@@ -29,7 +98,7 @@
                     </div>
                     <div class="feature">
                         <h3>あらすじ生成</h3>
-                        <p>設定に基づいて複数のあらすじを提案します。</p>
+                        <p>設定に基づいてあらすじを提案します。</p>
                     </div>
                     <div class="feature">
                         <h3>小説生成</h3>
@@ -43,7 +112,7 @@
             </section>
             
             <section class="cta">
-                <a href="{{ url_for('setting') }}" class="btn-primary">今すぐ小説を作成する</a>
+                <a href="{{ url_for('setting') }}" class="btn-primary">基本設定から小説を作成する</a>
             </section>
         </main>
         
