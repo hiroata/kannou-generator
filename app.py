@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 import os
 from services import setting_service, synopsis_service, story_service
 
@@ -22,6 +22,11 @@ def setting():
         # 設定を生成
         result = setting_service.generate_setting(model, setting_type, additional_details)
         
+        # エラーチェック
+        if "error" in result.get("setting", {}):
+            flash(f"設定の生成中にエラーが発生しました: {result['setting'].get('error')}")
+            return render_template('setting.html')
+            
         # セッションに保存
         session['setting_id'] = result['id']
         
@@ -48,10 +53,22 @@ def synopsis():
         # セッションに保存
         session['synopsis_id'] = result['id']
         
+        # 結果の処理
+        synopses = result.get('synopses', [])
+        
+        # エラーチェック
+        if isinstance(synopses, dict) and "error" in synopses:
+            flash(f"あらすじの生成中にエラーが発生しました: {synopses.get('error')}")
+            return render_template('synopsis.html', setting=setting_service.load_setting(setting_id))
+            
+        # リストでない場合はリストに変換
+        if not isinstance(synopses, list):
+            synopses = [synopses]
+        
         # あらすじ選択ページを表示
         return render_template(
             'synopsis.html',
-            synopses=result['synopses'],
+            synopses=synopses,
             setting=setting_service.load_setting(setting_id)
         )
     
@@ -78,6 +95,16 @@ def story():
         result = story_service.generate_story(
             synopsis_id, synopsis_index, model, style, chapter
         )
+        
+        # エラーチェック
+        if "error" in result:
+            flash(f"小説の生成中にエラーが発生しました: {result.get('error')}")
+            synopsis_data = synopsis_service.load_synopsis(synopsis_id)
+            return render_template(
+                'story.html',
+                synopses=synopsis_data.get('synopses'),
+                setting_id=synopsis_data.get('setting_id')
+            )
         
         # 小説を表示
         return render_template('story.html', story=result)

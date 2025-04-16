@@ -16,14 +16,17 @@ def generate_text(prompt, max_tokens=2000):
         # Clientオブジェクトの初期化
         client = genai.Client(api_key=GEMINI_API_KEY)
         
+        # 生成設定を別のオブジェクトとして準備
+        config = genai.GenerationConfig(
+            max_output_tokens=max_tokens,
+            temperature=0.7
+        )
+        
         # レスポンス生成
-        response = client.models.generate_content(
+        response = client.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
-            generation_config={
-                "max_output_tokens": max_tokens,
-                "temperature": 0.7
-            }
+            generation_config=config
         )
         
         # レスポンステキストを返す

@@ -50,10 +50,44 @@ def generate_synopses(setting_id, model="gemini", style="murakami", num_synopses
     
     # JSONパース（エラー処理）
     try:
-        synopses_data = json.loads(response)
-    except:
-        # JSONでない場合、簡易的な構造を作成
-        synopses_data = {"error": "正しい形式で取得できませんでした", "raw_response": response}
+        # レスポンスのデバッグ出力
+        print(f"API Response preview: {response[:200]}...")
+        
+        # JSONパース
+        parsed_data = json.loads(response)
+        
+        # "stories"キーがある場合は、その内容を取得
+        if isinstance(parsed_data, dict) and "stories" in parsed_data:
+            synopses_data = parsed_data["stories"]
+        else:
+            # なければそのまま使用
+            synopses_data = parsed_data
+        
+        # リストでない場合はリストに変換
+        if not isinstance(synopses_data, list):
+            synopses_data = [synopses_data]
+        
+        # 各あらすじの構造を確認・修正
+        for i, synopsis in enumerate(synopses_data):
+            if not isinstance(synopsis, dict):
+                synopses_data[i] = {"title": "エラー", "導入部": "不正な形式", "展開": "", "クライマックス": "", "結末": ""}
+                continue
+                
+            # 必須フィールドが存在するか確認
+            for field in ["title", "導入部", "展開", "クライマックス", "結末"]:
+                if field not in synopsis:
+                    synopsis[field] = "情報なし"
+                    
+            # titleがメソッドの場合の対応
+            if not isinstance(synopsis.get("title", ""), str) or callable(synopsis.get("title")):
+                synopsis["title"] = "無題のあらすじ"
+        
+    except json.JSONDecodeError as e:
+        print(f"JSON Parse error: {e}")
+        synopses_data = [{"title": "JSONパースエラー", "導入部": f"APIからの応答をJSONとして解析できませんでした: {str(e)}", "展開": "", "クライマックス": "", "結末": ""}]
+    except Exception as e:
+        print(f"Error processing API response: {e}")
+        synopses_data = [{"title": "処理エラー", "導入部": f"エラー: {str(e)}", "展開": "", "クライマックス": "", "結末": ""}]
     
     # あらすじの保存
     synopsis_id = str(uuid.uuid4())

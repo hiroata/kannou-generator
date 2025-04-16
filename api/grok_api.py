@@ -19,20 +19,23 @@ def generate_text(prompt, max_tokens=2000):
     }
     
     data = {
-        "model": "grok-3-latest",  # grok-3-betaから最新の正しいモデル名に変更
+        "model": "grok-3-latest",
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens
+        "max_tokens": max_tokens,
+        "temperature": 0.7  # 追加
     }
     
     try:
-        response = requests.post(GROK_API_URL, headers=headers, data=json.dumps(data))
+        # jsonパラメータを使用（dataではなく）
+        response = requests.post(GROK_API_URL, headers=headers, json=data)
         response.raise_for_status()
         
         result = response.json()
-        print(f"Grok API response: {result}")  # デバッグ用
+        print(f"Grok API Response keys: {result.keys()}")
+        
         return result["choices"][0]["message"]["content"]
     except Exception as e:
         print(f"Error calling Grok API: {e}")
         if 'response' in locals() and hasattr(response, 'text'):
-            print(f"Response content: {response.text}")
+            print(f"Response content: {response.text[:500]}")
         return f"エラーが発生しました: {e}"
