@@ -175,6 +175,19 @@ def story():
         synopsis_index = int(request.form.get('synopsis_index', 0))
         chapter = int(request.form.get('chapter', 1))
         next_chapter_direction = request.form.get('next_chapter_direction', '')
+        explicitness_level = int(request.form.get('explicitness_level', 3))
+        
+        # 選択されたプリセットを取得
+        selected_presets = request.form.getlist('presets')
+        
+        # プリセットの内容を方向性指示に追加
+        if selected_presets and not next_chapter_direction:
+            next_chapter_direction = "選択されたプリセット: " + ", ".join(selected_presets)
+            
+        # 文学的表現の強化指示を追加
+        if next_chapter_direction:
+            literary_directive = "\n【重要】性的描写は村上龍のような文学的表現を用い、年齢表記やバストサイズなどの直接的な数値表現は避けてください。徹底的な描写と比喩表現で読者の創造性を掻き立てる表現にしてください。"
+            next_chapter_direction += literary_directive
         
         # 強化オプションの取得
         enhance_options = {
@@ -182,7 +195,8 @@ def story():
             "enhance_emotions": request.form.get('enhance_emotions') == 'on',
             "enhance_sensory": request.form.get('enhance_sensory') == 'on',
             "enhance_voice": request.form.get('enhance_voice') == 'on',
-            "add_psychological_themes": request.form.get('add_psychological_themes') == 'on'
+            "add_psychological_themes": request.form.get('add_psychological_themes') == 'on',
+            "explicitness_level": explicitness_level
         }
         
         # 小説を生成
@@ -250,6 +264,15 @@ def api_generate_story():
     chapter = data.get('chapter', 1)
     direction = data.get('direction', '')
     enhance_options = data.get('enhance_options', {})
+    explicitness_level = data.get('explicitness_level', 3)
+    
+    # Add literary directive
+    if direction:
+        literary_directive = "\n【重要】性的描写は村上龍のような文学的表現を用い、年齢表記やバストサイズなどの直接的な数値表現は避けてください。徹底的な描写と比喩表現で読者の創造性を掻き立てる表現にしてください。"
+        direction += literary_directive
+    
+    # Update enhance options
+    enhance_options["explicitness_level"] = explicitness_level
     
     if not synopsis_id:
         return jsonify({"error": "あらすじIDが必要です"})
