@@ -6,20 +6,15 @@ from api import grok_api
 from services import story_service
 from config import EROTIC_DIALOG_PATTERNS, SENSORY_EXPRESSIONS, DIALOG_ENHANCEMENT_PRESETS
 
-def adjust_dialog_narrative_balance(story_id, dialog_ratio=50, dialog_style="explicit"):
+def adjust_dialog_narrative_balance(story_id, dialog_ratio=50, dialog_style="extreme"):
     """
     小説のセリフと地の文のバランスを調整する
     
     Args:
         story_id (str): 物語ID
         dialog_ratio (int): セリフの比率（0-100%）
-        dialog_style (str): セリフのスタイル
-            - "explicit": 露骨で直接的
-            - "metaphorical": 比喩的で間接的
-            - "internal": 内的独白が多い
-            - "emotional": 感情表現が豊か
-            - "extreme": 極端に露骨で卑猥
-            
+        dialog_style (str): セリフのスタイル ('extreme'がデフォルト)
+    
     Returns:
         dict: 調整された物語
     """
@@ -38,33 +33,29 @@ def adjust_dialog_narrative_balance(story_id, dialog_ratio=50, dialog_style="exp
         "extreme": "極端に露骨で卑猥な表現を使用し、読者の興奮を極限まで煽る。淫語やオノマトペを多用。"
     }
     
-    dialog_style_desc = dialog_style_descriptions.get(dialog_style, "標準的なセリフスタイル")
+    dialog_style_desc = dialog_style_descriptions.get(dialog_style, dialog_style_descriptions["extreme"])
     
     prompt = f"""
     以下の官能小説のセリフと地の文のバランスを調整してください。
     
-    物語の内容:
-    {story_text}
-    
+    物語の内容: {story_text}
     調整パラメータ:
     - セリフの比率: 全体の約{dialog_ratio}%
     - セリフのスタイル: {dialog_style}（{dialog_style_desc}）
     
-    以下の条件に従って調整してください:
-    1. 物語の基本的な内容と展開は維持する
+    条件:
+    1. 物語の基本的な内容と展開は維持
     2. セリフと地の文の比率を指定された割合に近づける
-    3. セリフには指定されたスタイルの特性を持たせる
-    4. 文体全体は「{style}」スタイルを維持する
-    5. キャラクターの一貫性を保つ
-    6. 官能描写の質と深さを損なわない
-    7. 数値的な身体の描写ではなく、文学的表現を用いる
-    8. 村上龍のようなハードボイルドな文体で描写する
-    9. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください
+    3. セリフは指定されたスタイルを反映し、卑猥で長文の淫語セリフを多用
+    4. 文体は「{style}」スタイルを維持し、村上龍のようなハードボイルドな語りで文学的クオリティを保つ
+    5. キャラクターの一貫性を維持
+    6. 数値的な身体描写は避け、感覚的・文学的表現を用いる
+    7. 読者の興奮を極限まで高める過激な表現（オノマトペ「ズチュッ」「グチョッ」、淫語「チンポ」「マンコ」）を積極的に使用
     
     調整された物語を生成してください。
     """
     
-    adjusted_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.5)
+    adjusted_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.2, temperature=0.9)
     
     adjusted_story = dict(story_data)
     adjusted_story["text"] = adjusted_text
@@ -102,8 +93,7 @@ def extract_dialog(story_text):
     western_dialogs = re.findall(western_dialog_pattern, story_text)
     conversation_dialogs = re.findall(conversation_pattern, story_text)
     
-    all_dialogs = jp_dialogs + western_dialogs + conversation_dialogs
-    return all_dialogs
+    return jp_dialogs + western_dialogs + conversation_dialogs
 
 def analyze_dialog_narrative_ratio(story_text):
     """
@@ -122,7 +112,7 @@ def analyze_dialog_narrative_ratio(story_text):
     dialog_count = len(dialogs)
     avg_dialog_length = round(dialog_char_count / dialog_count, 2) if dialog_count > 0 else 0
     
-    analysis = {
+    return {
         "dialog_count": dialog_count,
         "dialog_char_count": dialog_char_count,
         "total_char_count": total_char_count,
@@ -130,20 +120,14 @@ def analyze_dialog_narrative_ratio(story_text):
         "avg_dialog_length": avg_dialog_length,
         "dialogs_sample": dialogs[:5] if len(dialogs) > 5 else dialogs
     }
-    return analysis
 
-def transform_dialog_style(story_id, target_style="explicit"):
+def transform_dialog_style(story_id, target_style="extreme"):
     """
     物語のセリフのスタイルを変換する
     
     Args:
         story_id (str): 物語ID
-        target_style (str): 目標のセリフスタイル
-            - "explicit": 露骨で直接的
-            - "metaphorical": 比喩的で間接的
-            - "internal": 内的独白が多い
-            - "emotional": 感情表現が豊か
-            - "extreme": 極端に露骨で卑猥
+        target_style (str): 目標のセリフスタイル ('extreme'がデフォルト)
             
     Returns:
         dict: 変換された物語
@@ -162,29 +146,27 @@ def transform_dialog_style(story_id, target_style="explicit"):
         "extreme": "極端に露骨で卑猥な表現を使用し、読者の興奮を極限まで煽る。淫語やオノマトペを多用し、日本のエロ同人マンガ風の表現を取り入れる。"
     }
     
-    style_desc = style_descriptions.get(target_style, "標準的なセリフスタイル")
+    style_desc = style_descriptions.get(target_style, style_descriptions["extreme"])
     
     prompt = f"""
     以下の官能小説のセリフのスタイルを「{target_style}」スタイルに変換してください。
     
-    物語の内容:
-    {story_text}
+    物語の内容: {story_text}
+    目標のセリフスタイル: {target_style}（{style_desc}）
     
-    目標のセリフスタイル: {target_style}
-    説明: {style_desc}
+    条件:
+    1. 地の文はそのまま維持し、セリフ部分のみを変換
+    2. 「」や""で囲まれたセリフのみを対象
+    3. セリフの基本的な内容や意図を維持しつつ、表現方法を変更
+    4. キャラクターの個性や関係性を反映
+    5. 物語の流れや展開を損なわない
+    6. 卑猥で長文の淫語セリフ（「チンポでマンコを壊してぇ！」など）を積極的に使用
+    7. 文学的クオリティを保ち、村上龍風のハードボイルドな語りを維持
     
-    以下の条件に従って変換してください:
-    1. 地の文はそのまま維持し、セリフ部分のみを変換する
-    2. 「」や ""などのセリフのマーカーで囲まれた部分を変換の対象とする
-    3. セリフの基本的な内容や意図は維持しながら、表現方法を変更する
-    4. キャラクターの個性や関係性を反映したセリフにする
-    5. 物語の流れや展開を損なわないようにする
-    6. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください
-    
-    セリフのスタイルが変換された物語全体を返してください。
+    変換された物語全体を返してください。
     """
     
-    transformed_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.5)
+    transformed_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.2, temperature=0.9)
     
     transformed_story = dict(story_data)
     transformed_story["text"] = transformed_text
@@ -223,48 +205,36 @@ def enhance_erotic_dialog(story_id, preset="extreme", custom_patterns=None, cust
     story_text = story_data.get("text", "")
     
     preset_config = DIALOG_ENHANCEMENT_PRESETS.get(preset, DIALOG_ENHANCEMENT_PRESETS["extreme"])
-    
     pattern_types = custom_patterns if custom_patterns else preset_config["patterns"]
     intensity = custom_intensity if custom_intensity is not None else preset_config["intensity"]
     
     patterns = []
     for pattern_type in pattern_types:
-        patterns.extend(EROTIC_DIALOG_PATTERNS.get(pattern_type, [])[:3])  # 各タイプから最大3つのパターンを選択
+        patterns.extend(EROTIC_DIALOG_PATTERNS.get(pattern_type, [])[:2])
     
-    sensory_examples = []
-    for sense in SENSORY_EXPRESSIONS:
-        sensory_examples.append(SENSORY_EXPRESSIONS[sense][0])  # 各感覚から1つの例を選択
+    sensory_examples = [SENSORY_EXPRESSIONS[sense][0] for sense in SENSORY_EXPRESSIONS]
     
     prompt = f"""
     以下の官能小説の「セリフ部分」のみを、より卑猥で官能的な表現に強化してください。
-    物語の「地の文」はそのまま維持し、「」や ""で囲まれたセリフ部分のみを変更してください。
+    地の文は変更せず、「」や""で囲まれたセリフのみを対象にしてください。
     
     強化レベル: {intensity}（1は控えめ、7は極端に露骨）
+    表現パターン参考: {patterns[:3]}
+    五感表現参考: {sensory_examples[:3]}
     
-    以下のような表現パターンを参考にしてください:
-    {patterns[:5]}
+    条件:
+    1. セリフを卑猥で長文にし、リアルで詳細な表現にする
+    2. 喘ぎ声（「あぁん」「んっ」）やオノマトペ（「ズチュッ」「グチョッ」）を多用
+    3. 淫語（「チンポ」「マンコ」）や快感を直接言語化
+    4. キャラクターの性格や関係性を反映した口調を維持
+    5. 文学的クオリティを保ち、村上龍風のハードボイルドな語りを損なわない
+    6. 読者の興奮を極限まで高める過激な表現を追求
     
-    また、以下のような五感表現を取り入れてください:
-    {sensory_examples}
-    
-    具体的な指示:
-    1. 性的なセリフをより生々しく、リアルに、長く、詳細に変更する
-    2. 喘ぎ声や感嘆詞をより多様に表現する（「あぁん」「んっ」「ふぁ」など）
-    3. 快感や欲望を直接的に言語化するセリフを増やす
-    4. キャラクターの性格や関係性を反映した口調を維持する
-    5. 日本の同人作品で見られるような卑猥な表現を用いる
-    6. 数値的な年齢や体格の表現は避け、文学的な表現を使う
-    7. セリフ以外の地の文や物語展開は一切変更しない
-    8. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください
-    9. オノマトペ（ズチュッ、グチョッ）や淫語を積極的に使用してください
-    
-    原文:
-    {story_text}
-    
-    セリフ部分のみを強化した文章全体を返してください。
+    原文: {story_text}
+    強化された文章全体を返してください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.5)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.2, temperature=0.9)
     
     enhanced_story = dict(story_data)
     enhanced_story["text"] = enhanced_text
@@ -287,47 +257,6 @@ def enhance_erotic_dialog(story_id, preset="extreme", custom_patterns=None, cust
             "intensity": intensity
         }
     }
-
-def enhance_dialog_only_regex(story_text, intensity=3, pattern_types=None):
-    """
-    正規表現を使用してセリフ部分のみを抽出し強化する
-    
-    Args:
-        story_text (str): 物語のテキスト
-        intensity (int): 強化の強度（1-7）
-        pattern_types (list, optional): 使用するパターンタイプのリスト
-        
-    Returns:
-        str: 強化された物語のテキスト
-    """
-    if not pattern_types:
-        pattern_types = ["喘ぎ声", "懇願", "肯定", "オノマトペ"]
-    
-    jp_pattern = r'「([^」]*)」'
-    western_pattern = r'"([^"]*)"'
-    
-    def replace_jp_dialog(match):
-        dialog = match.group(1)
-        sexual_keywords = ["あ", "ん", "イ", "気持", "感じ", "もっと", "お願い", "すご", "いい", "チンポ", "マンコ"]
-        is_sexual = any(keyword in dialog for keyword in sexual_keywords)
-        
-        if is_sexual:
-            dialog_type = "喘ぎ声" if "あ" in dialog or "ん" in dialog else "懇願" if "お願い" in dialog or "もっと" in dialog else "肯定" if "いい" in dialog or "すご" in dialog else pattern_types[0]
-            if dialog_type in pattern_types and dialog_type in EROTIC_DIALOG_PATTERNS:
-                patterns = EROTIC_DIALOG_PATTERNS[dialog_type]
-                import random
-                enhanced_dialog = random.choice(patterns).strip('「」')
-                return f"「{enhanced_dialog}」"
-        return match.group(0)
-    
-    def replace_western_dialog(match):
-        dialog = match.group(1)
-        # 同様の処理（必要に応じて拡張可能）
-        return match.group(0)
-    
-    enhanced_text = re.sub(jp_pattern, replace_jp_dialog, story_text)
-    enhanced_text = re.sub(western_pattern, replace_western_dialog, enhanced_text)
-    return enhanced_text
 
 def analyze_dialog_content(story_text):
     """
@@ -362,11 +291,10 @@ def analyze_dialog_content(story_text):
         if phrase_count > 0:
             common_phrases.append({"phrase": phrase, "count": phrase_count})
     
-    result = {
+    return {
         "dialog_count": len(dialogs),
-        "explicit_level": min(7, int(explicit_count / len(dialogs) * 3)),  # 0-7のスケール
-        "emotion_level": min(5, int(emotion_count / len(dialogs) * 5)),  # 0-5のスケール
+        "explicit_level": min(7, int(explicit_count / len(dialogs) * 3)),
+        "emotion_level": min(5, int(emotion_count / len(dialogs) * 5)),
         "avg_length": avg_length,
         "common_expressions": sorted(common_phrases, key=lambda x: x["count"], reverse=True)[:5]
     }
-    return result

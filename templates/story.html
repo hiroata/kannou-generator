@@ -171,24 +171,6 @@
             color: #e91e63;
         }
         
-        .ai-model-selector {
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .ai-model-selector select {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #fff;
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        
-        .ai-model-selector select option {
-            background-color: #333;
-            color: white;
-        }
-        
         @media (max-width: 768px) {
             .preset-options {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -205,18 +187,6 @@
                 <a href="{{ url_for('setting') }}">設定に戻る</a>
                 <a href="{{ url_for('synopsis') }}">あらすじに戻る</a>
             </nav>
-            
-            {% if ai_models %}
-            <div class="ai-model-selector">
-                <form action="{{ url_for('select_model') }}" method="post" style="display: inline-block;">
-                    <select name="model" id="ai-model" onchange="this.form.submit()">
-                        {% for model_id, model_desc in ai_models.items() %}
-                            <option value="{{ model_id }}" {% if current_model and current_model.name == model_id %}selected{% endif %}>{{ model_desc }}</option>
-                        {% endfor %}
-                    </select>
-                </form>
-            </div>
-            {% endif %}
         </header>
         
         <main>
@@ -507,7 +477,7 @@
         </main>
         
         <footer>
-            <p>&copy; 2025 官能小説ジェネレーター</p>
+            <p>© 2025 官能小説ジェネレーター</p>
         </footer>
     </div>
     

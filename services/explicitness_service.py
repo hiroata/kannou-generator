@@ -1,16 +1,16 @@
 import os
 import json
 import uuid
-from api import grok_api  # 修正: 'Penal Code'を削除
+from api import grok_api
 from services import story_service
 
-def adjust_explicitness_level(story_id, level=3):
+def adjust_explicitness_level(story_id, level=6):
     """
     物語の露骨さのレベルを調整する
     
     Args:
         story_id (str): 物語ID
-        level (int): 露骨さのレベル（1: 最も控えめ、6: 極端に露骨）
+        level (int): 露骨さのレベル（1: 最も控えめ、6: 極端に露骨、デフォルトは6）
         
     Returns:
         dict: 調整された物語
@@ -31,36 +31,26 @@ def adjust_explicitness_level(story_id, level=3):
         6: "極端に露骨で異常。性的内容を異常なまでに詳細かつ過激に描写し、卑猥な言葉や淫語を極限まで多用。読者の興奮を極端に煽る表現を追求。"
     }
     
-    level_desc = level_descriptions.get(level, level_descriptions[3])
+    level_desc = level_descriptions.get(level, level_descriptions[6])
     
     prompt = f"""
     以下の官能小説の露骨さのレベルを調整してください。
     
-    物語の内容:
-    {story_text}
+    物語の内容: {story_text}
+    目標の露骨さレベル: {level}（{level_desc}）
     
-    目標の露骨さレベル: {level}
-    説明: {level_desc}
-    
-    以下の条件に従って調整してください:
-    1. 物語の基本的な内容や展開は維持する
-    2. 指定された露骨さレベルに合わせて性的表現を調整する
-    3. 文体全体は「{style}」スタイルを維持する
+    条件:
+    1. 物語の基本的な内容と展開は維持
+    2. 性的表現を指定された露骨さレベルに調整
+    3. 文体は「{style}」スタイルを維持
     4. キャラクターの一貫性を保つ
-    5. ハードボイルドな村上龍風の文体を用いる
-    6. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください
+    5. 村上龍風のハードボイルドな文体を維持
+    6. 過激で卑猥な表現を多用し、読者の興奮を極限まで高める
     
-    主な調整ポイント:
-    - 性的行為の描写の詳細度
-    - 性器や体の部位への言及の直接性
-    - 卑猥な言葉や淫語の使用頻度
-    - 性的感覚や反応の描写の詳細度
-    - 罪悪感や羞恥心の強調度
-    
-    レベル{level}の露骨さに調整された物語を生成してください。
+    調整された物語を生成してください。
     """
     
-    adjusted_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.5)
+    adjusted_text = grok_api.generate_text(prompt, max_tokens=len(story_text) * 1.2, temperature=0.9)
     
     adjusted_story = dict(story_data)
     adjusted_story["text"] = adjusted_text
@@ -86,26 +76,18 @@ def analyze_explicitness(story_text):
     Returns:
         dict: 分析結果
     """
-    sexual_words_basic = ["性", "エロ", "セックス", "愛撫", "キス", "抱き合", "抱擁"]
-    sexual_words_medium = ["胸", "乳", "股間", "下半身", "裸", "全裸", "下着", "唇", "舌", "舐"]
     sexual_words_explicit = ["オマンコ", "マンコ", "チンポ", "ちんぽ", "勃起", "射精", "イク", "潮", "精液", "挿入", 
                              "肉棒", "膣内", "陰茎", "陰唇", "潮吹き", "連続絶頂", "性奴隷"]
-    
     sexual_expressions = ["あぁん", "んっ", "いやぁ", "ふぁん", "もっと", "激しく", "奥", "気持ちいい", "イク", "イッ"]
     
     counts = {
-        "basic": sum(story_text.count(word) for word in sexual_words_basic),
-        "medium": sum(story_text.count(word) for word in sexual_words_medium),
         "explicit": sum(story_text.count(word) for word in sexual_words_explicit),
         "expressions": sum(story_text.count(expr) for expr in sexual_expressions)
     }
     
     total_chars = len(story_text)
-    sexual_word_ratio = (counts["basic"] + counts["medium"] + counts["explicit"]) / total_chars if total_chars > 0 else 0
-    
     explicitness_score = min(6, (
-        (counts["basic"] * 0.5 + counts["medium"] * 1.5 + counts["explicit"] * 3 + counts["expressions"] * 2)
-        / total_chars * 1000
+        (counts["explicit"] * 3 + counts["expressions"] * 2) / total_chars * 1000
     )) if total_chars > 0 else 0
     
     explicitness_level = round(explicitness_score)
@@ -123,16 +105,12 @@ def analyze_explicitness(story_text):
         6: "極端に露骨で異常"
     }
     
-    analysis = {
+    return {
         "explicitness_level": explicitness_level,
         "explicitness_description": level_descriptions.get(explicitness_level, "不明"),
         "explicitness_score": round(explicitness_score, 2),
-        "word_counts": counts,
-        "sexual_word_ratio": round(sexual_word_ratio * 100, 2),
         "total_chars": total_chars
     }
-    
-    return analysis
 
 def adjust_specific_scene(story_id, scene_start, scene_end, target_level):
     """
@@ -169,29 +147,26 @@ def adjust_specific_scene(story_id, scene_start, scene_end, target_level):
         6: "極端に露骨で異常。性的内容を異常なまでに詳細かつ過激に描写し、読者の興奮を極端に煽る。"
     }
     
-    level_desc = level_descriptions.get(target_level, level_descriptions[3])
+    level_desc = level_descriptions.get(target_level, level_descriptions[6])
     
     prompt = f"""
-    以下の官能小説の一部分の露骨さのレベルを調整してください。
+    以下の官能小説のシーンを、目標の露骨さレベルに調整してください。
     
-    シーンのテキスト:
-    {scene_text}
+    シーンのテキスト: {scene_text}
+    目標の露骨さレベル: {target_level}（{level_desc}）
     
-    目標の露骨さレベル: {target_level}
-    説明: {level_desc}
-    
-    以下の条件に従って調整してください:
-    1. シーンの基本的な内容や展開は維持する
-    2. 指定された露骨さレベルに合わせて性的表現を調整する
-    3. 文体や全体のトーンを維持する
+    条件:
+    1. シーンの基本的な内容と展開は維持
+    2. 性的表現を指定された露骨さレベルに調整
+    3. 文体やトーンを維持
     4. 前後の文脈との一貫性を保つ
-    5. 村上龍風のハードボイルドな描写を維持する
-    6. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください
+    5. 村上龍風のハードボイルドな描写を維持
+    6. 過激で卑猥な表現を多用し、読者の興奮を極限まで高める
     
-    調整されたシーンのテキストのみを返してください。
+    調整されたシーンのテキストを返してください。
     """
     
-    adjusted_scene = grok_api.generate_text(prompt, max_tokens=len(scene_text) * 1.5)
+    adjusted_scene = grok_api.generate_text(prompt, max_tokens=len(scene_text) * 1.2, temperature=0.9)
     
     adjusted_text = story_text[:start_index] + adjusted_scene + story_text[end_index:]
     
