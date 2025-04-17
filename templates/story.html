@@ -51,69 +51,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         
-        .enhancement-options {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f0f4f8;
-            border-radius: 8px;
-            border-left: 5px solid #4285F4;
-        }
-        
-        .enhancement-options h4 {
-            color: #333;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-        
-        .enhancement-checkboxes {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .enhancement-checkboxes label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-        
-        .enhancement-checkboxes input[type="checkbox"] {
-            width: auto;
-        }
-        
-        .enhancement-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .sd-prompts-generator {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f8f0f4;
-            border-radius: 8px;
-            border-left: 5px solid #e91e63;
-        }
-        
-        .sd-prompts-generator h4 {
-            color: #c2185b;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-        
-        .loading-indicator {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .loading-indicator img {
-            width: 50px;
-            height: 50px;
-        }
-        
         .enhanced-flag {
             background-color: #4CAF50;
             color: white;
@@ -176,6 +113,23 @@
             border-color: #e91e63;
         }
 
+        .enhancement-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .enhancement-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .enhancement-options input[type="checkbox"] {
+            width: auto;
+        }
+
         @media (max-width: 768px) {
             .preset-options {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -208,57 +162,6 @@
                         {{ story.text|nl2br }}
                     </div>
                     
-                    <!-- ストーリー強化オプション -->
-                    <div class="enhancement-options">
-                        <h4>ストーリーを深化させる</h4>
-                        <p>以下のオプションを選択して、物語の質をさらに高めることができます。</p>
-                        
-                        <form action="{{ url_for('enhance_story') }}" method="post">
-                            <input type="hidden" name="story_id" value="{{ story.id }}">
-                            
-                            <div class="enhancement-checkboxes">
-                                <label><input type="checkbox" name="enhance_psychology" checked> キャラクター心理を深める</label>
-                                <label><input type="checkbox" name="enhance_emotions" checked> 感情の起伏を強化</label>
-                                <label><input type="checkbox" name="enhance_sensory" checked> 五感表現を豊かに</label>
-                                <label><input type="checkbox" name="enhance_voice" checked> キャラクターの声を一貫化</label>
-                                <label><input type="checkbox" name="add_psychological_themes"> 心理的テーマを追加</label>
-                            </div>
-                            
-                            <div id="loading-enhance" class="loading-indicator">
-                                <p>小説を強化中です。しばらくお待ちください...</p>
-                                <div class="spinner"></div>
-                            </div>
-                            
-                            <button type="submit" class="btn-primary">ストーリーを深化させる</button>
-                        </form>
-                    </div>
-                    
-                    <!-- SDプロンプト生成 -->
-                    <div class="sd-prompts-generator">
-                        <h4>イラスト用プロンプト生成</h4>
-                        <p>Stable Diffusion用の画像生成プロンプトを作成します。</p>
-                        
-                        <form action="{{ url_for('generate_scene_prompts') }}" method="post">
-                            <input type="hidden" name="story_id" value="{{ story.id }}">
-                            
-                            <div class="form-group">
-                                <label for="num-scenes">生成するシーン数:</label>
-                                <select id="num-scenes" name="num_scenes">
-                                    <option value="1">1シーン</option>
-                                    <option value="3" selected>3シーン</option>
-                                    <option value="5">5シーン</option>
-                                </select>
-                            </div>
-                            
-                            <div id="loading-prompts" class="loading-indicator">
-                                <p>プロンプトを生成中です。しばらくお待ちください...</p>
-                                <div class="spinner"></div>
-                            </div>
-                            
-                            <button type="submit" class="btn-secondary">SD用プロンプトを生成</button>
-                        </form>
-                    </div>
-                    
                     <!-- 次の章のフォーム -->
                     <div class="next-chapter-form">
                         <h4>次の章の方向性を指定</h4>
@@ -282,75 +185,84 @@
                                     <div class="preset-category">
                                         <h6>エロティック要素の強化:</h6>
                                         <div class="preset-options">
-                                            <div class="preset-option" data-text="キャラクターのセリフをより卑猥にして、淫語や喘ぎ声をもっと具体的に長く書いてください。性器の名称や猥褻な表現を遠慮なく使ってください。">
+                                            <a href="#" class="preset-option" data-text="キャラクターのセリフをより卑猥にして、淫語や喘ぎ声をもっと具体的に長く書いてください。性器の名称や猥褻な表現を遠慮なく使ってください。">
                                                 <span>淫語セリフ強化</span>
-                                            </div>
-                                            <div class="preset-option" data-text="性的描写をより詳細に、身体の反応や感覚をより具体的に描写してください。解剖学的な詳細も含めてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="性的描写をより詳細に、身体の反応や感覚をより具体的に描写してください。解剖学的な詳細も含めてください。">
                                                 <span>性的描写の詳細化</span>
-                                            </div>
-                                            <div class="preset-option" data-text="性的緊張をさらに高め、より過激なシーンに発展させてください。エロスをエスカレートさせてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="性的緊張をさらに高め、より過激なシーンに発展させてください。エロスをエスカレートさせてください。">
                                                 <span>官能的エスカレーション</span>
-                                            </div>
-                                            <div class="preset-option" data-text="社会的タブーやより背徳的な関係性を展開してください。禁断の関係による罪悪感と快感を描写してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="社会的タブーやより背徳的な関係性を展開してください。禁断の関係による罪悪感と快感を描写してください。">
                                                 <span>禁断の関係性</span>
-                                            </div>
-                                            <div class="preset-option" data-text="恥ずかしさと快感を同時に感じる葛藤をより強調してください。羞恥心と性的興奮の矛盾を描写してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="恥ずかしさと快感を同時に感じる葛藤をより強調してください。羞恥心と性的興奮の矛盾を描写してください。">
                                                 <span>羞恥と快楽の拮抗</span>
-                                            </div>
-                                            <div class="preset-option" data-text="支配と服従の力関係をより明確に描写してください。命令や屈服のシーンをより具体的に書いてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="支配と服従の力関係をより明確に描写してください。命令や屈服のシーンをより具体的に書いてください。">
                                                 <span>支配/服従の強調</span>
-                                            </div>
-                                            <div class="preset-option" data-text="五感を活用した官能的描写を増やしてください。匂い、味、触感、音などをより具体的に表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="五感を活用した官能的描写を増やしてください。匂い、味、触感、音などをより具体的に表現してください。">
                                                 <span>五感表現の強化</span>
-                                            </div>
-                                            <div class="preset-option" data-text="キャラクターの内面にある性的空想や妄想、夢を描写してください。現実と空想の境界を曖昧にしてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="キャラクターの内面にある性的空想や妄想、夢を描写してください。現実と空想の境界を曖昧にしてください。">
                                                 <span>性的妄想シーン</span>
-                                            </div>
-                                            <div class="preset-option" data-text="公共の場や第三者の目がある状況での性的緊張を描写してください。露出や発見されるリスクによる興奮を強調してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="公共の場や第三者の目がある状況での性的緊張を描写してください。露出や発見されるリスクによる興奮を強調してください。">
                                                 <span>露出的要素</span>
-                                            </div>
-                                            <div class="preset-option" data-text="卑猥な言葉による精神的興奮を詳細に描写してください。言葉責めのシーンを入れ、言葉がもたらす心理的影響を強調してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="卑猥な言葉による精神的興奮を詳細に描写してください。言葉責めのシーンを入れ、言葉がもたらす心理的影響を強調してください。">
                                                 <span>言葉責め</span>
-                                            </div>
+                                            </a>
                                         </div>
                                     </div>
                                     
                                     <div class="preset-category">
                                         <h6>ストーリーの深化:</h6>
                                         <div class="preset-options">
-                                            <div class="preset-option" data-text="キャラクターの内面的な矛盾や葛藤をより深く描写してください。欲望と理性の対立を掘り下げてください。">
+                                            <a href="#" class="preset-option" data-text="キャラクターの内面的な矛盾や葛藤をより深く描写してください。欲望と理性の対立を掘り下げてください。">
                                                 <span>心理的葛藤</span>
-                                            </div>
-                                            <div class="preset-option" data-text="登場人物の過去の傷や心的外傷を掘り下げ、現在の行動や感情との関連を描写してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="登場人物の過去の傷や心的外傷を掘り下げ、現在の行動や感情との関連を描写してください。">
                                                 <span>過去のトラウマ</span>
-                                            </div>
-                                            <div class="preset-option" data-text="性的関係を超えた感情的な絆の発展を描写してください。肉体関係と感情的つながりの関係性を掘り下げてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="性的関係を超えた感情的な絆の発展を描写してください。肉体関係と感情的つながりの関係性を掘り下げてください。">
                                                 <span>感情的つながり</span>
-                                            </div>
-                                            <div class="preset-option" data-text="読者の予想を裏切るようなプロットの転換や意外な展開を入れてください。物語に意外性をもたせてください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="読者の予想を裏切るようなプロットの転換や意外な展開を入れてください。物語に意外性をもたせてください。">
                                                 <span>予想外の展開</span>
-                                            </div>
-                                            <div class="preset-option" data-text="経験を通じた登場人物の内面的変化を描写してください。キャラクターの成長や価値観の変化を表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="経験を通じた登場人物の内面的変化を描写してください。キャラクターの成長や価値観の変化を表現してください。">
                                                 <span>キャラクターの成長</span>
-                                            </div>
-                                            <div class="preset-option" data-text="周囲からの視線や社会的立場がもたらす緊張を描写してください。社会的規範と個人の欲望の衝突を表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="周囲からの視線や社会的立場がもたらす緊張を描写してください。社会的規範と個人の欲望の衝突を表現してください。">
                                                 <span>社会的影響</span>
-                                            </div>
-                                            <div class="preset-option" data-text="表面的な行動と内面の思いの不一致を強調してください。本心と言動のギャップを描写してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="表面的な行動と内面の思いの不一致を強調してください。本心と言動のギャップを描写してください。">
                                                 <span>内面と外面の乖離</span>
-                                            </div>
-                                            <div class="preset-option" data-text="登場人物間の力関係や感情の変化を描写してください。関係性の流動性や複雑さを表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="登場人物間の力関係や感情の変化を描写してください。関係性の流動性や複雑さを表現してください。">
                                                 <span>関係性の変化</span>
-                                            </div>
-                                            <div class="preset-option" data-text="性的快楽の代償として支払われる犠牲を描写してください。行為がもたらす代償や痛みを表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="性的快楽の代償として支払われる犠牲を描写してください。行為がもたらす代償や痛みを表現してください。">
                                                 <span>代償や犠牲</span>
-                                            </div>
-                                            <div class="preset-option" data-text="自己許容や相互理解による心理的救済のテーマを描写してください。葛藤からの解放や自己受容の過程を表現してください。">
+                                            </a>
+                                            <a href="#" class="preset-option" data-text="自己許容や相互理解による心理的救済のテーマを描写してください。葛藤からの解放や自己受容の過程を表現してください。">
                                                 <span>許しと救済</span>
-                                            </div>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <h6>ストーリー強化オプション:</h6>
+                            <div class="enhancement-options">
+                                <label><input type="checkbox" name="enhance_psychology" checked> キャラクター心理を深める</label>
+                                <label><input type="checkbox" name="enhance_emotions" checked> 感情の起伏を強化</label>
+                                <label><input type="checkbox" name="enhance_sensory" checked> 五感表現を豊かに</label>
+                                <label><input type="checkbox" name="enhance_voice" checked> キャラクターの声を一貫化</label>
+                                <label><input type="checkbox" name="add_psychological_themes"> 心理的テーマを追加</label>
                             </div>
                             
                             <textarea id="next-chapter-direction" name="next_chapter_direction" class="next-chapter-direction" placeholder="次の章でどのような展開を希望するか入力できます。上のオプションから選択するか、自由に指示を書いてください。より卑猥な表現や、特定のシチュエーションなども指定できます。（入力は任意です）"></textarea>
@@ -434,11 +346,7 @@
                 submitButton.innerHTML = '処理中...';
                 
                 // フォームのアクションに応じたローディング表示
-                if (this.action.includes('enhance_story')) {
-                    document.getElementById('loading-enhance').style.display = 'block';
-                } else if (this.action.includes('generate_scene_prompts')) {
-                    document.getElementById('loading-prompts').style.display = 'block';
-                } else if (this.action.includes('story') && this.querySelector('input[name="chapter"]')) {
+                if (this.action.includes('story') && this.querySelector('input[name="chapter"]')) {
                     document.getElementById('loading-next-chapter').style.display = 'block';
                 }
             });
@@ -449,27 +357,30 @@
             const presetOptions = document.querySelectorAll('.preset-option');
             const directionTextarea = document.getElementById('next-chapter-direction');
             
-            presetOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // 選択状態をトグル
-                    this.classList.toggle('selected');
-                    
-                    // 選択されたすべてのオプションのテキストを集める
-                    const selectedOptions = document.querySelectorAll('.preset-option.selected');
-                    let combinedText = '';
-                    
-                    selectedOptions.forEach(selected => {
-                        const text = selected.getAttribute('data-text');
-                        // 文の重複を避ける
-                        if (text && !combinedText.includes(text)) {
-                            combinedText += text + '\n\n';
-                        }
+            if (presetOptions.length > 0 && directionTextarea) {
+                presetOptions.forEach(option => {
+                    option.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        // 選択状態をトグル
+                        this.classList.toggle('selected');
+                        
+                        // 選択されたすべてのオプションのテキストを集める
+                        const selectedOptions = document.querySelectorAll('.preset-option.selected');
+                        let combinedText = '';
+                        
+                        selectedOptions.forEach(selected => {
+                            const text = selected.getAttribute('data-text');
+                            // 文の重複を避ける
+                            if (text && !combinedText.includes(text)) {
+                                combinedText += text + '\n\n';
+                            }
+                        });
+                        
+                        // テキストエリアに設定
+                        directionTextarea.value = combinedText.trim();
                     });
-                    
-                    // テキストエリアに設定
-                    directionTextarea.value = combinedText.trim();
                 });
-            });
+            }
         });
     </script>
     

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}ポートフォリオ管理 | 官能小説ジェネレーター{% endblock %}
+
+{% block content %}
+<section>
+    <div class="section-header">
+        <h2>ポートフォリオ管理</h2>
+        <p>複数の小説や設定、キャラクターをまとめて管理できます。シリーズ物の作成や関連作品の整理に便利です。</p>
+    </div>
+    
+    <div class="portfolios-container">
+        <div class="portfolio-form">
+            <h3>新しいポートフォリオを作成</h3>
+            
+            <form action="{{ url_for('create_portfolio') }}" method="post">
+                <div class="form-group">
+                    <label for="title">タイトル:</label>
+                    <input type="text" id="title" name="title" required placeholder="ポートフォリオのタイトル">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">説明 (任意):</label>
+                    <textarea id="description" name="description" rows="3" placeholder="ポートフォリオの説明や用途など"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">ポートフォリオを作成</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="portfolio-list">
+            <h3>保存されたポートフォリオ</h3>
+            
+            {% if portfolios %}
+                <div class="portfolios-grid">
+                    {% for portfolio in portfolios %}
+                        <div class="portfolio-card">
+                            <h4>{{ portfolio.title }}</h4>
+                            <p class="portfolio-description">{{ portfolio.description|truncate(100) }}</p>
+                            
+                            <div class="portfolio-stats">
+                                <div class="stat">
+                                    <span class="stat-value">{{ portfolio.story_count }}</span>
+                                    <span class="stat-label">小説</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">{{ portfolio.setting_count }}</span>
+                                    <span class="stat-label">設定</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value">{{ portfolio.character_count }}</span>
+                                    <span class="stat-label">キャラクター</span>
+                                </div>
+                            </div>
+                            
+                            <div class="portfolio-meta">
+                                <span class="date-info">更新: {{ portfolio.updated_at|truncate(10, True, '') }}</span>
+                            </div>
+                            
+                            <div class="portfolio-actions">
+                                <a href="{{ url_for('view_portfolio', portfolio_id=portfolio.id) }}" class="btn-primary">開く</a>
+                                <a href="{{ url_for('export_portfolio', portfolio_id=portfolio.id) }}" class="btn-secondary">エクスポート</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>保存されたポートフォリオはありません。新しいポートフォリオを作成してください。</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .portfolios-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    @media (min-width: 768px) {
+        .portfolios-container {
+            grid-template-columns: 1fr 2fr;
+        }
+    }
+    
+    .portfolio-form {
+        padding: 25px;
+        background-color: #f0f4f8;
+        border-radius: 8px;
+        border-left: 5px solid #4285F4;
+    }
+    
+    .portfolios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .portfolio-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 20px;
+        transition: transform 0.2s ease;
+    }
+    
+    .portfolio-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .portfolio-description {
+        color: #666;
+        margin: 10px 0;
+        min-height: 40px;
+    }
+    
+    .portfolio-stats {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0;
+        padding: 10px 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #e91e63;
+    }
+    
+    .stat-label {
+        font-size: 0.8em;
+        color: #666;
+    }
+    
+    .portfolio-meta {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 15px;
+    }
+    
+    .date-info {
+        font-size: 0.8em;
+        color: #888;
+    }
+    
+    .portfolio-actions {
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+{% endblock %}

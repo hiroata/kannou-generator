@@ -51,32 +51,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // スタイル切り替えの視覚的フィードバック
-    const styleSelects = document.querySelectorAll('select[name="style"]');
-    if (styleSelects.length > 0) {
-        styleSelects.forEach(select => {
-            select.addEventListener('change', function() {
-                const parentForm = this.closest('form');
-                if (this.value === 'murakami') {
-                    parentForm.style.borderLeft = '5px solid #2196F3';
-                } else if (this.value === 'dan') {
-                    parentForm.style.borderLeft = '5px solid #F44336';
-                }
-            });
-        });
-    }
+    // 指示プリセットの選択処理
+    const presetOptions = document.querySelectorAll('.preset-option');
+    const directionTextarea = document.getElementById('next-chapter-direction');
     
-    // モデル切り替えの視覚的フィードバック
-    const modelSelects = document.querySelectorAll('select[name="model"]');
-    if (modelSelects.length > 0) {
-        modelSelects.forEach(select => {
-            select.addEventListener('change', function() {
-                const parentForm = this.closest('form');
-                if (this.value === 'grok') {
-                    parentForm.style.borderTop = '5px solid #000';
-                } else if (this.value === 'gemini') {
-                    parentForm.style.borderTop = '5px solid #4285F4';
-                }
+    if (presetOptions.length > 0 && directionTextarea) {
+        presetOptions.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                // 選択状態をトグル
+                this.classList.toggle('selected');
+                
+                // 選択されたすべてのオプションのテキストを集める
+                const selectedOptions = document.querySelectorAll('.preset-option.selected');
+                let combinedText = '';
+                
+                selectedOptions.forEach(selected => {
+                    const text = selected.getAttribute('data-text');
+                    // 文の重複を避ける
+                    if (text && !combinedText.includes(text)) {
+                        combinedText += text + '\n\n';
+                    }
+                });
+                
+                // テキストエリアに設定
+                directionTextarea.value = combinedText.trim();
             });
         });
     }

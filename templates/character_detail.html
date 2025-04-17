@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}キャラクター詳細 | 官能小説ジェネレーター{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="section-header">
+        <h2>キャラクター詳細</h2>
+        <nav class="breadcrumb">
+            <a href="{{ url_for('index') }}">ホーム</a> &gt;
+            <a href="{{ url_for('setting') }}">設定</a> &gt;
+            キャラクター詳細
+        </nav>
+    </div>
+    
+    <div class="character-container">
+        <div class="character-basic-info">
+            <h3>{{ character.name }}</h3>
+            <div class="character-info-grid">
+                <div class="info-item">
+                    <span class="label">年齢:</span>
+                    <span class="value">{{ character.age }}</span>
+                </div>
+                {% if character.physical_features %}
+                <div class="info-item">
+                    <span class="label">身体的特徴:</span>
+                    <span class="value">{{ character.physical_features }}</span>
+                </div>
+                {% endif %}
+                {% if character.personality %}
+                <div class="info-item">
+                    <span class="label">性格:</span>
+                    <span class="value">{{ character.personality }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if not detailed_character %}
+        <div class="character-detail-form">
+            <h3>キャラクター詳細化</h3>
+            <p>このキャラクターをより詳細に設定しましょう。村上龍風のハードボイルドな描写で、より深みのあるキャラクターに発展させます。</p>
+            
+            <form action="{{ url_for('character_detail') }}" method="post">
+                <input type="hidden" name="character_index" value="{{ character_index }}">
+                
+                <div class="form-group">
+                    <label for="depth_level">詳細度レベル:</label>
+                    <select name="depth_level" id="depth_level">
+                        <option value="1">レベル1 (控えめ)</option>
+                        <option value="2">レベル2 (軽い描写)</option>
+                        <option value="3" selected>レベル3 (標準)</option>
+                        <option value="4">レベル4 (詳細)</option>
+                        <option value="5">レベル5 (非常に露骨)</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">キャラクターを詳細化する</button>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="character-detailed-info">
+            <h3>詳細プロファイル</h3>
+            
+            <div class="detailed-section">
+                <h4>身体的詳細</h4>
+                <p>{{ detailed_character.physical_detail|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>心理的プロファイル</h4>
+                <p>{{ detailed_character.psychological_profile|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>性的嗜好</h4>
+                <p>{{ detailed_character.sexual_preferences|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>社会的関係性</h4>
+                <p>{{ detailed_character.social_dynamics|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>形成的経験</h4>
+                <p>{{ detailed_character.formative_experiences|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>話し方・声のパターン</h4>
+                <p>{{ detailed_character.voice_pattern|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>内的葛藤</h4>
+                <p>{{ detailed_character.inner_conflicts|nl2br }}</p>
+            </div>
+            
+            <div class="detailed-section">
+                <h4>外面的な仮面</h4>
+                <p>{{ detailed_character.outward_facade|nl2br }}</p>
+            </div>
+            
+            <div class="actions">
+                <a href="{{ url_for('synopsis_direct') }}" class="btn-primary">このキャラクターであらすじに進む</a>
+                <a href="{{ url_for('setting') }}" class="btn-secondary">設定に戻る</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .character-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    @media (min-width: 768px) {
+        .character-container {
+            grid-template-columns: 1fr 2fr;
+        }
+    }
+    
+    .character-basic-info {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .character-info-grid {
+        display: grid;
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .info-item {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 10px;
+    }
+    
+    .label {
+        font-weight: bold;
+        color: #555;
+    }
+    
+    .character-detail-form {
+        padding: 25px;
+        background-color: #f0f4f8;
+        border-radius: 8px;
+        border-left: 5px solid #4285F4;
+    }
+    
+    .character-detailed-info {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        padding: 25px;
+    }
+    
+    .detailed-section {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .detailed-section:last-child {
+        border-bottom: none;
+    }
+    
+    .detailed-section h4 {
+        color: #e91e63;
+        margin-bottom: 10px;
+    }
+    
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}

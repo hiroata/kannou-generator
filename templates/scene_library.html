@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}シーンライブラリー | 官能小説ジェネレーター{% endblock %}
+
+{% block content %}
+<section>
+    <div class="section-header">
+        <h2>シーンライブラリー</h2>
+        <p>様々な状況のシーンテンプレートを生成・適用できます。小説に組み込むための官能シーンを簡単に作成しましょう。</p>
+    </div>
+    
+    <div class="templates-container">
+        <div class="template-form">
+            <h3>新しいシーンテンプレート</h3>
+            <p>以下のオプションを選択して、新しいシーンテンプレートを生成します。</p>
+            
+            <form action="{{ url_for('generate_scene_template') }}" method="post">
+                <div class="form-group">
+                    <label for="category">シーンタイプ:</label>
+                    <select id="category" name="category" required>
+                        {% for code, name in categories.items() %}
+                            <option value="{{ code }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="explicitness_level">露骨さレベル:</label>
+                    <select id="explicitness_level" name="explicitness_level">
+                        <option value="1">1 - 非常に控えめ</option>
+                        <option value="2">2 - 控えめ</option>
+                        <option value="3" selected>3 - 標準</option>
+                        <option value="4">4 - 露骨</option>
+                        <option value="5">5 - 非常に露骨</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="style">文体スタイル:</label>
+                    <select id="style" name="style">
+                        <option value="murakami" selected>村上龍風</option>
+                        <option value="dan">団鬼六風</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">テンプレートを生成</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="template-list">
+            <h3>保存されたテンプレート</h3>
+            
+            {% if templates %}
+                <div class="templates-grid">
+                    {% for template in templates %}
+                        <div class="template-card">
+                            <h4>{{ template.title }}</h4>
+                            <div class="template-meta">
+                                <span class="category-tag">{{ categories.get(template.category, template.category) }}</span>
+                                <span class="level-tag">露骨さ: {{ template.explicitness_level }}</span>
+                                <span class="style-tag">{{ template.style }}</span>
+                            </div>
+                            <div class="template-actions">
+                                <a href="{{ url_for('view_scene_template', template_id=template.id) }}" class="btn-secondary">詳細</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>保存されたテンプレートはありません。新しいテンプレートを生成してください。</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .templates-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    @media (min-width: 768px) {
+        .templates-container {
+            grid-template-columns: 1fr 2fr;
+        }
+    }
+    
+    .template-form {
+        padding: 25px;
+        background-color: #f0f4f8;
+        border-radius: 8px;
+        border-left: 5px solid #4285F4;
+    }
+    
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .template-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 20px;
+        transition: transform 0.2s ease;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .template-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 15px 0;
+    }
+    
+    .template-meta span {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+    }
+    
+    .category-tag {
+        background-color: #e91e63;
+        color: white;
+    }
+    
+    .level-tag {
+        background-color: #ff9800;
+        color: white;
+    }
+    
+    .style-tag {
+        background-color: #4caf50;
+        color: white;
+    }
+    
+    .template-actions {
+        margin-top: 15px;
+        text-align: right;
+    }
+</style>
+{% endblock %}
