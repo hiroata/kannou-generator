@@ -35,6 +35,57 @@
             font-weight: bold;
             color: #333;
         }
+        
+        /* タブスタイル */
+        .style-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .style-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .style-tab:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .style-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #e91e63;
+        }
+        
+        .style-description {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .style-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .style-tab {
+                flex: 1 0 auto;
+                text-align: center;
+                margin-bottom: -1px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -55,13 +106,28 @@
                     {% if auto_generated %}
                         <div class="auto-actions">
                             <p>あらすじが自動生成されました。このまま小説を生成するか、別のあらすじを生成できます。</p>
-                            <form action="{{ url_for('story') }}" method="post" style="display: inline-block; margin-right: 10px;">
+                            <form action="{{ url_for('story') }}" method="post" class="synopsis-form">
                                 <input type="hidden" name="synopsis_index" value="0">
-                                <input type="hidden" name="style" value="murakami">
+                                <input type="hidden" name="style" value="murakami" class="synopsis-style-input">
                                 <input type="hidden" name="chapter" value="1">
+                                
+                                <div class="style-tabs synopsis-style-tabs">
+                                    <div class="style-tab active" data-style="murakami">村上龍</div>
+                                    <div class="style-tab" data-style="dan">団鬼六</div>
+                                    <div class="style-tab" data-style="tanizaki">谷崎潤一郎</div>
+                                    <div class="style-tab" data-style="matayoshi">又吉直樹</div>
+                                    <div class="style-tab" data-style="higashino">東野圭吾</div>
+                                    <div class="style-tab" data-style="eromanga">エロ同人</div>
+                                </div>
+                                
+                                <div class="style-description synopsis-style-description">
+                                    <!-- JavaScriptで動的に表示 -->
+                                </div>
+                                
                                 <button type="submit" class="btn-primary">このあらすじで小説を生成</button>
                             </form>
-                            <form action="{{ url_for('synopsis') }}" method="post" style="display: inline-block;">
+                            
+                            <form action="{{ url_for('synopsis') }}" method="post" style="margin-top: 15px;">
                                 <input type="hidden" name="style" value="murakami">
                                 <button type="submit" class="btn-secondary">別のあらすじを生成</button>
                             </form>
@@ -79,31 +145,32 @@
                                     <p><strong>結末:</strong> {{ synopsis.結末 }}</p>
                                 </div>
                                 
-                                <div class="synopsis-actions">
-                                    <form action="{{ url_for('story') }}" method="post">
-                                        <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
-                                        <input type="hidden" name="style" value="murakami">
-                                        <input type="hidden" name="chapter" value="1">
-                                        <button type="submit" class="btn-primary">このあらすじで小説を生成</button>
-                                    </form>
-                                    
-                                    <form action="{{ url_for('synopsis') }}" method="post">
-                                        <input type="hidden" name="style" value="murakami">
-                                        <button type="submit" class="btn-secondary">あらすじを再生成</button>
-                                    </form>
-                                </div>
-                                
-                                <div class="form-group" style="margin-top: 15px;">
-                                    <label for="style-{{ loop.index }}">文体スタイル:</label>
-                                    <select id="style-{{ loop.index }}" name="style" form="story-form-{{ loop.index }}" required>
-                                        <option value="murakami" selected>村上龍風</option>
-                                        <option value="dan">団鬼六風</option>
-                                    </select>
-                                </div>
-                                
-                                <form id="story-form-{{ loop.index }}" action="{{ url_for('story') }}" method="post">
+                                <form action="{{ url_for('story') }}" method="post" class="synopsis-form">
                                     <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
+                                    <input type="hidden" name="style" value="murakami" class="synopsis-style-input">
                                     <input type="hidden" name="chapter" value="1">
+                                    
+                                    <div class="style-tabs synopsis-style-tabs">
+                                        <div class="style-tab active" data-style="murakami">村上龍</div>
+                                        <div class="style-tab" data-style="dan">団鬼六</div>
+                                        <div class="style-tab" data-style="tanizaki">谷崎潤一郎</div>
+                                        <div class="style-tab" data-style="matayoshi">又吉直樹</div>
+                                        <div class="style-tab" data-style="higashino">東野圭吾</div>
+                                        <div class="style-tab" data-style="eromanga">エロ同人</div>
+                                    </div>
+                                    
+                                    <div class="style-description synopsis-style-description">
+                                        <!-- JavaScriptで動的に表示 -->
+                                    </div>
+                                    
+                                    <div class="synopsis-actions">
+                                        <button type="submit" class="btn-primary">このあらすじで小説を生成</button>
+                                        
+                                        <form action="{{ url_for('synopsis') }}" method="post">
+                                            <input type="hidden" name="style" value="murakami">
+                                            <button type="submit" class="btn-secondary">あらすじを再生成</button>
+                                        </form>
+                                    </div>
                                 </form>
                             </div>
                         {% endfor %}
@@ -151,13 +218,23 @@
                         </div>
                     {% endif %}
                     
-                    <form action="{{ url_for('synopsis') }}" method="post">
+                    <form action="{{ url_for('synopsis') }}" method="post" id="synopsis-form">
+                        <input type="hidden" name="style" value="murakami" id="synopsis-style-input">
+                        
                         <div class="form-group">
-                            <label for="style">文体スタイル:</label>
-                            <select id="style" name="style" required>
-                                <option value="murakami" selected>村上龍風</option>
-                                <option value="dan">団鬼六風</option>
-                            </select>
+                            <label>文体スタイル:</label>
+                            <div class="style-tabs">
+                                <div class="style-tab active" data-style="murakami">村上龍</div>
+                                <div class="style-tab" data-style="dan">団鬼六</div>
+                                <div class="style-tab" data-style="tanizaki">谷崎潤一郎</div>
+                                <div class="style-tab" data-style="matayoshi">又吉直樹</div>
+                                <div class="style-tab" data-style="higashino">東野圭吾</div>
+                                <div class="style-tab" data-style="eromanga">エロ同人</div>
+                            </div>
+                            
+                            <div id="synopsis-style-description" class="style-description">
+                                <!-- JavaScriptで動的に表示 -->
+                            </div>
                         </div>
                         
                         <div class="form-actions">
@@ -174,5 +251,86 @@
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 文体スタイルの説明
+        const styleDescriptions = {
+            "murakami": "村上龍のような都会的で生々しい描写と冷静な語り口、性描写と社会描写を組み合わせた文体です。シニカルな視線と生々しい官能描写が特徴的です。",
+            "dan": "団鬼六のようなSM描写に特化した文体。緊張感と支配・服従関係、儀式的な調教描写が特徴的です。",
+            "tanizaki": "谷崎潤一郎のような官能的で耽美的な文体。独特の美意識と細密な描写で、性的なものへの執着とその背後にある美と狂気を描きます。",
+            "matayoshi": "又吉直樹のような現代的で内省的な文体。日常の何気ない瞬間から性的欲望の本質に迫り、ユーモアと皮肉を交えて描写します。",
+            "higashino": "東野圭吾のような伏線と謎が絡み合う文体。性的関係の背後にある過去の秘密や複雑な人間関係を、サスペンス要素と共に描きます。",
+            "eromanga": "エロ同人マンガのような過激で卑猥な表現を追求する文体。オノマトペや直接的なセリフを多用し、視覚的で即物的な描写が特徴です。"
+        };
+        
+        // タブ選択の処理
+        function initStyleTabs() {
+            // メインのスタイルタブ
+            const styleTabs = document.querySelectorAll('.style-tabs:not(.synopsis-style-tabs) .style-tab');
+            const styleInput = document.getElementById('synopsis-style-input');
+            const styleDesc = document.getElementById('synopsis-style-description');
+            
+            if (styleTabs.length > 0) {
+                styleTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        styleTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        if (styleInput) styleInput.value = style;
+                        
+                        // 説明を表示
+                        if (styleDesc) {
+                            styleDesc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = document.querySelector('.style-tabs:not(.synopsis-style-tabs) .style-tab.active');
+                if (activeTab && styleDesc) {
+                    styleDesc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                }
+            }
+            
+            // あらすじカードのスタイルタブ（複数ある可能性）
+            const synopsisForms = document.querySelectorAll('.synopsis-form');
+            
+            synopsisForms.forEach(form => {
+                const tabs = form.querySelectorAll('.synopsis-style-tabs .style-tab');
+                const input = form.querySelector('.synopsis-style-input');
+                const desc = form.querySelector('.synopsis-style-description');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        if (input) input.value = style;
+                        
+                        // 説明を表示
+                        if (desc) {
+                            desc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = form.querySelector('.synopsis-style-tabs .style-tab.active');
+                if (activeTab && desc) {
+                    desc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                }
+            });
+        }
+        
+        // ページ読み込み時に初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initStyleTabs();
+        });
+    </script>
 </body>
 </html>

@@ -171,9 +171,58 @@
             color: #e91e63;
         }
         
+        /* タブスタイル */
+        .style-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .style-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .style-tab:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .style-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #e91e63;
+        }
+        
+        .style-description {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
         @media (max-width: 768px) {
             .preset-options {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .style-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .style-tab {
+                flex: 1 0 auto;
+                text-align: center;
+                margin-bottom: -1px;
             }
         }
     </style>
@@ -211,16 +260,24 @@
                         <h4>次の章の方向性を指定</h4>
                         <form action="{{ url_for('story') }}" method="post" id="next-chapter-form">
                             <input type="hidden" name="synopsis_index" value="{{ synopsis_index|default(0) }}">
-                            <input type="hidden" name="style" value="{{ style|default('murakami') }}">
+                            <input type="hidden" name="style" value="{{ style|default('murakami') }}" id="selected-style-input">
                             <input type="hidden" name="chapter" value="{{ story.chapter|int + 1 }}">
                             <input type="hidden" name="previous_chapter_id" value="{{ story.id }}">
                             
                             <div class="next-chapter-options">
-                                <label for="style-select">文体スタイル:</label>
-                                <select id="style-select" name="style" required>
-                                    <option value="murakami" {% if style == 'murakami' %}selected{% endif %}>村上龍風</option>
-                                    <option value="dan" {% if style == 'dan' %}selected{% endif %}>団鬼六風</option>
-                                </select>
+                                <label>文体スタイル:</label>
+                                <div class="style-tabs">
+                                    <div class="style-tab {% if style == 'murakami' or not style %}active{% endif %}" data-style="murakami">村上龍</div>
+                                    <div class="style-tab {% if style == 'dan' %}active{% endif %}" data-style="dan">団鬼六</div>
+                                    <div class="style-tab {% if style == 'tanizaki' %}active{% endif %}" data-style="tanizaki">谷崎潤一郎</div>
+                                    <div class="style-tab {% if style == 'matayoshi' %}active{% endif %}" data-style="matayoshi">又吉直樹</div>
+                                    <div class="style-tab {% if style == 'higashino' %}active{% endif %}" data-style="higashino">東野圭吾</div>
+                                    <div class="style-tab {% if style == 'eromanga' %}active{% endif %}" data-style="eromanga">エロ同人</div>
+                                </div>
+                            </div>
+                            
+                            <div id="style-description" class="style-description">
+                                <!-- JavaScriptで動的に表示 -->
                             </div>
                             
                             <div class="explicitness-slider">
@@ -420,10 +477,10 @@
                             
                             <h6>ストーリー強化オプション:</h6>
                             <div class="enhancement-options">
-                                <label><input type="checkbox" name="enhance_psychology" checked> キャラクター心理を深める</label>
-                                <label><input type="checkbox" name="enhance_emotions" checked> 感情の起伏を強化</label>
-                                <label><input type="checkbox" name="enhance_sensory" checked> 五感表現を豊かに</label>
-                                <label><input type="checkbox" name="enhance_voice" checked> キャラクターの声を一貫化</label>
+                                <label><input type="checkbox" name="enhance_psychology"> キャラクター心理を深める</label>
+                                <label><input type="checkbox" name="enhance_emotions"> 感情の起伏を強化</label>
+                                <label><input type="checkbox" name="enhance_sensory"> 五感表現を豊かに</label>
+                                <label><input type="checkbox" name="enhance_voice"> キャラクターの声を一貫化</label>
                                 <label><input type="checkbox" name="add_psychological_themes"> 心理的テーマを追加</label>
                             </div>
                             
@@ -455,16 +512,24 @@
                                     <p><strong>クライマックス:</strong> {{ synopsis.クライマックス }}</p>
                                     <p><strong>結末:</strong> {{ synopsis.結末 }}</p>
                                 </div>
-                                <form action="{{ url_for('story') }}" method="post">
+                                <form action="{{ url_for('story') }}" method="post" class="synopsis-form">
                                     <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
-                                    <div class="form-group">
-                                        <label for="style-{{ loop.index }}">文体スタイル:</label>
-                                        <select id="style-{{ loop.index }}" name="style" required>
-                                            <option value="murakami" selected>村上龍風</option>
-                                            <option value="dan">団鬼六風</option>
-                                        </select>
-                                    </div>
+                                    <input type="hidden" name="style" value="murakami" class="synopsis-style-input">
                                     <input type="hidden" name="chapter" value="1">
+                                    
+                                    <div class="style-tabs synopsis-style-tabs">
+                                        <div class="style-tab active" data-style="murakami">村上龍</div>
+                                        <div class="style-tab" data-style="dan">団鬼六</div>
+                                        <div class="style-tab" data-style="tanizaki">谷崎潤一郎</div>
+                                        <div class="style-tab" data-style="matayoshi">又吉直樹</div>
+                                        <div class="style-tab" data-style="higashino">東野圭吾</div>
+                                        <div class="style-tab" data-style="eromanga">エロ同人</div>
+                                    </div>
+                                    
+                                    <div class="style-description synopsis-style-description">
+                                        <!-- JavaScriptで動的に表示 -->
+                                    </div>
+                                    
                                     <button type="submit" class="btn-secondary">このあらすじで小説を生成</button>
                                 </form>
                             </div>
@@ -529,8 +594,86 @@
             });
         }
         
-        // Preset checkboxes
+        // 文体スタイルの説明
+        const styleDescriptions = {
+            "murakami": "村上龍のような都会的で生々しい描写と冷静な語り口、性描写と社会描写を組み合わせた文体です。シニカルな視線と生々しい官能描写が特徴的です。",
+            "dan": "団鬼六のようなSM描写に特化した文体。緊張感と支配・服従関係、儀式的な調教描写が特徴的です。",
+            "tanizaki": "谷崎潤一郎のような官能的で耽美的な文体。独特の美意識と細密な描写で、性的なものへの執着とその背後にある美と狂気を描きます。",
+            "matayoshi": "又吉直樹のような現代的で内省的な文体。日常の何気ない瞬間から性的欲望の本質に迫り、ユーモアと皮肉を交えて描写します。",
+            "higashino": "東野圭吾のような伏線と謎が絡み合う文体。性的関係の背後にある過去の秘密や複雑な人間関係を、サスペンス要素と共に描きます。",
+            "eromanga": "エロ同人マンガのような過激で卑猥な表現を追求する文体。オノマトペや直接的なセリフを多用し、視覚的で即物的な描写が特徴です。"
+        };
+        
+        // タブ選択の処理
+        function initStyleTabs() {
+            // メインのスタイルタブ
+            const styleTabs = document.querySelectorAll('.style-tab');
+            const styleInput = document.getElementById('selected-style-input');
+            const styleDesc = document.getElementById('style-description');
+            
+            if (styleTabs.length > 0) {
+                styleTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        styleTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        styleInput.value = style;
+                        
+                        // 説明を表示
+                        if (styleDesc) {
+                            styleDesc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = document.querySelector('.style-tab.active');
+                if (activeTab && styleDesc) {
+                    styleDesc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                }
+            }
+            
+            // あらすじカードのスタイルタブ（複数ある可能性）
+            const synopsisForms = document.querySelectorAll('.synopsis-form');
+            
+            synopsisForms.forEach(form => {
+                const tabs = form.querySelectorAll('.style-tab');
+                const input = form.querySelector('.synopsis-style-input');
+                const desc = form.querySelector('.synopsis-style-description');
+                
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        input.value = style;
+                        
+                        // 説明を表示
+                        if (desc) {
+                            desc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = form.querySelector('.style-tab.active');
+                if (activeTab && desc) {
+                    desc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                }
+            });
+        }
+        
+        // ページ読み込み時に初期化
         document.addEventListener('DOMContentLoaded', function() {
+            initStyleTabs();
+            
+            // Preset checkboxes
             const presetLabels = document.querySelectorAll('.preset-label');
             const directionTextarea = document.getElementById('next-chapter-direction');
             
@@ -557,15 +700,17 @@
                     });
                     
                     // Also listen for direct checkbox changes
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked) {
-                            label.classList.add('selected');
-                        } else {
-                            label.classList.remove('selected');
-                        }
-                        
-                        updateDirectionText();
-                    });
+                    if (checkbox) {
+                        checkbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                label.classList.add('selected');
+                            } else {
+                                label.classList.remove('selected');
+                            }
+                            
+                            updateDirectionText();
+                        });
+                    }
                 });
                 
                 function updateDirectionText() {
@@ -587,7 +732,7 @@
                     
                     // Add literary quality enforcement
                     if (combinedText) {
-                        combinedText += "\n【重要】性的描写は村上龍のような文学的表現を用い、年齢表記やバストサイズなどの直接的な数値表現は避けてください。徹底的な描写と比喩表現で読者の創造性を掻き立てる表現にしてください。\n";
+                        combinedText += "\n【重要】性的描写は文学的表現を用い、年齢表記やバストサイズなどの直接的な数値表現は避けてください。徹底的な描写と比喩表現で読者の創造性を掻き立てる表現にしてください。\n";
                     }
                     
                     // Set to textarea

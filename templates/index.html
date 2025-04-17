@@ -34,26 +34,95 @@
             max-width: 800px;
             margin: 0 auto 30px;
         }
+        
+        /* タブスタイル */
+        .style-tabs {
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .style-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .style-tab:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .style-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #e91e63;
+        }
+        
+        .style-description {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .style-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .style-tab {
+                flex: 1 0 auto;
+                text-align: center;
+                margin-bottom: -1px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>官能小説ジェネレーター</h1>
-            <p>AI活用で村上龍・団鬼六の文体を再現</p>
+            <p>AI活用で著名作家の文体を再現</p>
         </header>
         
         <main>
             <section class="intro">
                 <h2>魅力的な官能小説を生成</h2>
-                <p>あなたのシナリオからAIが小説を自動生成します。村上龍風の都会的で生々しい文体と、団鬼六風のSM描写に特化した文体を選択できます。</p>
+                <p>あなたのシナリオからAIが小説を自動生成します。村上龍、団鬼六、谷崎潤一郎、又吉直樹、東野圭吾など様々な文体から選択できます。</p>
             </section>
             
             <section class="custom-scenario-container">
                 <h3>あなたのシナリオから小説を生成</h3>
                 <p>登場人物や状況を自由に設定してください。AIが設定を分析し、魅力的な官能小説を生成します。</p>
                 
-                <form action="{{ url_for('custom_setting') }}" method="post">
+                <form action="{{ url_for('custom_setting') }}" method="post" id="custom-form">
+                    <input type="hidden" name="style" value="murakami" id="custom-style-input">
+                    
+                    <div class="form-group">
+                        <label>文体スタイル:</label>
+                        <div class="style-tabs">
+                            <div class="style-tab active" data-style="murakami">村上龍</div>
+                            <div class="style-tab" data-style="dan">団鬼六</div>
+                            <div class="style-tab" data-style="tanizaki">谷崎潤一郎</div>
+                            <div class="style-tab" data-style="matayoshi">又吉直樹</div>
+                            <div class="style-tab" data-style="higashino">東野圭吾</div>
+                            <div class="style-tab" data-style="eromanga">エロ同人</div>
+                        </div>
+                        
+                        <div id="custom-style-description" class="style-description">
+                            <!-- JavaScriptで動的に表示 -->
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="custom_scenario">あなたのシナリオ:</label>
                         <textarea id="custom_scenario" name="custom_scenario" class="custom-scenario" placeholder="例: 上京し大学に通う事になった史郎。一人暮らしをする事になり、まずはご近所への挨拶をしようと隣の家に向かった。出てきたのは人妻のめぐりで同郷出身の愛らしい女性。すぐに意気投合し史郎は安心していたが…。一方のめぐりは夫に浮気をされてしかもセックスレスで欲求不満な日々。そこに史郎のようなイケメンが現れ、オマ○コが疼いていた。そしてある日、史郎の家のインターホンが鳴る。警戒しながら覗き穴を覗くと、そこには目をギラギラと輝かせためぐりが笑みを浮かべて立っていて…。"></textarea>
@@ -72,5 +141,53 @@
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 文体スタイルの説明
+        const styleDescriptions = {
+            "murakami": "村上龍のような都会的で生々しい描写と冷静な語り口、性描写と社会描写を組み合わせた文体です。シニカルな視線と生々しい官能描写が特徴的です。",
+            "dan": "団鬼六のようなSM描写に特化した文体。緊張感と支配・服従関係、儀式的な調教描写が特徴的です。",
+            "tanizaki": "谷崎潤一郎のような官能的で耽美的な文体。独特の美意識と細密な描写で、性的なものへの執着とその背後にある美と狂気を描きます。",
+            "matayoshi": "又吉直樹のような現代的で内省的な文体。日常の何気ない瞬間から性的欲望の本質に迫り、ユーモアと皮肉を交えて描写します。",
+            "higashino": "東野圭吾のような伏線と謎が絡み合う文体。性的関係の背後にある過去の秘密や複雑な人間関係を、サスペンス要素と共に描きます。",
+            "eromanga": "エロ同人マンガのような過激で卑猥な表現を追求する文体。オノマトペや直接的なセリフを多用し、視覚的で即物的な描写が特徴です。"
+        };
+        
+        // タブ選択の処理
+        function initStyleTabs() {
+            const styleTabs = document.querySelectorAll('.style-tab');
+            const styleInput = document.getElementById('custom-style-input');
+            const styleDesc = document.getElementById('custom-style-description');
+            
+            if (styleTabs.length > 0) {
+                styleTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        styleTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        styleInput.value = style;
+                        
+                        // 説明を表示
+                        if (styleDesc) {
+                            styleDesc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = document.querySelector('.style-tab.active');
+                if (activeTab && styleDesc) {
+                    styleDesc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                }
+            }
+        }
+        
+        // ページ読み込み時に初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initStyleTabs();
+        });
+    </script>
 </body>
 </html>

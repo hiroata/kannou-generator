@@ -24,6 +24,7 @@ def index():
 def custom_setting():
     """カスタム設定からの生成処理"""
     custom_scenario = request.form.get('custom_scenario', '')
+    style = request.form.get('style', 'murakami')  # スタイルの取得
     result = setting_service.generate_setting_from_scenario(
         model="grok",  # Grok 3に固定
         scenario=custom_scenario
@@ -32,6 +33,7 @@ def custom_setting():
         flash(f"設定の生成中にエラーが発生しました: {result['setting'].get('error', '不明なエラー')}")
         return redirect(url_for('index'))
     session['setting_id'] = result['id']
+    session['style'] = style  # セッションにスタイルを保存
     return redirect(url_for('synopsis_direct'))
 
 @app.route('/setting', methods=['GET', 'POST'])
@@ -40,6 +42,7 @@ def setting():
     if request.method == 'POST':
         setting_type = request.form.get('setting_type', '一般')
         additional_details = request.form.get('additional_details', '')
+        style = request.form.get('style', 'murakami')  # スタイルの取得
         result = setting_service.generate_setting(
             model="grok",  # Grok 3に固定
             setting_type=setting_type,
@@ -49,6 +52,7 @@ def setting():
             flash(f"設定の生成中にエラーが発生しました: {result['setting'].get('error', '不明なエラー')}")
             return render_template('setting.html')
         session['setting_id'] = result['id']
+        session['style'] = style  # セッションにスタイルを保存
         return redirect(url_for('synopsis'))
     return render_template('setting.html')
 
@@ -63,10 +67,14 @@ def synopsis_direct():
     if not setting_data:
         flash(f"設定データ(ID: {setting_id})の読み込みに失敗しました。")
         return redirect(url_for('index'))
+    
+    # スタイルをセッションから取得
+    style = session.get('style', 'murakami')
+    
     synopsis_result = synopsis_service.generate_synopses(
         setting_id,
         model="grok",  # Grok 3に固定
-        style="murakami",
+        style=style,
         num_synopses=1
     )
     synopses = synopsis_result.get('synopses', [])
@@ -77,13 +85,13 @@ def synopsis_direct():
     story_result = story_service.generate_story(
         synopsis_result['id'], 0,
         model="grok",  # Grok 3に固定
-        style="murakami",
+        style=style,
         chapter=1
     )
     if "error" in story_result:
         flash(f"第1話の生成中にエラーが発生しました: {story_result.get('error', '不明なエラー')}")
         return render_template('synopsis.html', synopses=synopses, setting=setting_data)
-    return render_template('story.html', story=story_result, synopsis_index=0, style="murakami")
+    return render_template('story.html', story=story_result, synopsis_index=0, style=style)
 
 @app.route('/synopsis', methods=['GET', 'POST'])
 def synopsis():
@@ -98,6 +106,7 @@ def synopsis():
         return redirect(url_for('setting'))
     if request.method == 'POST':
         style = request.form.get('style', 'murakami')
+        session['style'] = style  # セッションにスタイルを保存
         result = synopsis_service.generate_synopses(
             setting_id,
             model="grok",  # Grok 3に固定
@@ -109,8 +118,8 @@ def synopsis():
             flash(f"あらすじの生成中にエラーが発生しました: {result.get('error', '不明なエラー')}")
             return render_template('synopsis.html', setting=setting_data)
         session['synopsis_id'] = result['id']
-        return render_template('synopsis.html', synopses=synopses, setting=setting_data)
-    return render_template('synopsis.html', setting=setting_data)
+        return render_template('synopsis.html', synopses=synopses, setting=setting_data, style=style)
+    return render_template('synopsis.html', setting=setting_data, style=session.get('style', 'murakami'))
 
 @app.route('/story', methods=['GET', 'POST'])
 def story():
@@ -125,21 +134,37 @@ def story():
         return redirect(url_for('synopsis') if session.get('setting_id') else url_for('setting'))
     if request.method == 'POST':
         style = request.form.get('style', 'murakami')
+        session['style'] = style  # セッションにスタイルを保存
         synopsis_index = int(request.form.get('synopsis_index', 0))
         chapter = int(request.form.get('chapter', 1))
         next_chapter_direction = request.form.get('next_chapter_direction', '')
         explicitness_level = int(request.form.get('explicitness_level', 6))  # 卑猥さ強調のためデフォルトを高めに
+        
+        # 強化オプションの取得（チェックされていないと None を返すので False に変換）
+        enhance_psychology = request.form.get('enhance_psychology') is not None
+        enhance_emotions = request.form.get('enhance_emotions') is not None
+        enhance_sensory = request.form.get('enhance_sensory') is not None
+        enhance_voice = request.form.get('enhance_voice') is not None
+        add_psychological_themes = request.form.get('add_psychological_themes') is not None
+        
         enhance_options = {
-            "explicitness_level": explicitness_level
+            "explicitness_level": explicitness_level,
+            "enhance_psychology": enhance_psychology,
+            "enhance_emotions": enhance_emotions,
+            "enhance_sensory": enhance_sensory,
+            "enhance_voice": enhance_voice,
+            "add_psychological_themes": add_psychological_themes
         }
+        
         if next_chapter_direction:
             # 卑猥な長文セリフと文学性を両立する指示を追加
             literary_directive = (
                 "\n【重要】卑猥な淫語セリフを長文で生成し、過激で興奮を誘う表現を強調してください。"
-                "ただし、村上龍のような文学的文体を維持し、直接的な数値表現（年齢やバストサイズなど）は避け、"
+                f"ただし、{style}のような文学的文体を維持し、直接的な数値表現（年齢やバストサイズなど）は避け、"
                 "比喩と描写で読者の想像力を刺激してください。"
             )
             next_chapter_direction += literary_directive
+        
         result = story_service.generate_story(
             synopsis_id, synopsis_index,
             model="grok",  # Grok 3に固定
@@ -148,18 +173,58 @@ def story():
             direction=next_chapter_direction,
             enhance_options=enhance_options
         )
+        
         if "error" in result:
             flash(f"小説の生成中にエラーが発生しました: {result.get('error', '不明なエラー')}")
             return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), synopsis_index=synopsis_index, style=style)
+        
+        # 強化オプションがONの場合は強化処理
+        if any([enhance_psychology, enhance_emotions, enhance_sensory, enhance_voice, add_psychological_themes]):
+            enhanced_result = enhancement_service.enhance_story(result["id"], enhance_options)
+            if "error" not in enhanced_result:
+                result = enhanced_result
+        
         return render_template('story.html', story=result, synopsis_index=synopsis_index, style=style, enhanced=True)
-    return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'))
+    
+    return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), style=session.get('style', 'murakami'))
 
 # enhance_dialogルートを追加
 @app.route('/enhance_dialog/<story_id>', methods=['GET', 'POST'])
 def enhance_dialog(story_id):
     """セリフ強化ページ"""
-    # ここにセリフ強化のロジックを後で実装できます
-    return f"Story ID: {story_id} のセリフを強化します"  # 仮のレスポンス
+    from config import EROTIC_DIALOG_PATTERNS, DIALOG_ENHANCEMENT_PRESETS
+    
+    story_data = story_service.load_story(story_id)
+    if not story_data:
+        flash("指定された小説が見つかりません。")
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        preset = request.form.get('preset', 'extreme')
+        intensity = int(request.form.get('intensity', 5))
+        pattern_types = request.form.getlist('pattern_types')
+        
+        # パターンタイプが選択されていない場合はプリセットから取得
+        if not pattern_types and preset in DIALOG_ENHANCEMENT_PRESETS:
+            pattern_types = DIALOG_ENHANCEMENT_PRESETS[preset]['patterns']
+        
+        result = dialog_service.enhance_erotic_dialog(
+            story_id=story_id,
+            preset=preset,
+            custom_patterns=pattern_types,
+            custom_intensity=intensity
+        )
+        
+        if "error" in result:
+            flash(f"セリフ強化中にエラーが発生しました: {result.get('error', '不明なエラー')}")
+            return redirect(url_for('story', story_id=story_id))
+        
+        return render_template('story.html', story=result, synopsis_index=0, style=story_data.get('style', 'murakami'), enhanced=True)
+    
+    return render_template('dialog_enhance.html', 
+                          story=story_data, 
+                          patterns=EROTIC_DIALOG_PATTERNS,
+                          presets=DIALOG_ENHANCEMENT_PRESETS)
 
 if __name__ == '__main__':
     os.makedirs('data/settings', exist_ok=True)
