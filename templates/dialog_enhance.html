@@ -1,0 +1,320 @@
+<!-- templates/dialog_enhance.html - これを全文コピペして新しいファイルを作成してください -->
+{% extends "base.html" %}
+
+{% block title %}セリフ強化 | 官能小説ジェネレーター{% endblock %}
+
+{% block head %}
+<style>
+    .story-preview {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-line;
+    }
+    
+    .pattern-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .pattern-option {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    .pattern-option label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        width: 100%;
+    }
+    
+    .pattern-option input[type="checkbox"] {
+        width: auto;
+    }
+    
+    .preset-selector {
+        margin-bottom: 20px;
+    }
+    
+    .preset-selector h4 {
+        margin-bottom: 10px;
+    }
+    
+    .preset-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .preset-button {
+        padding: 8px 15px;
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .preset-button.active {
+        background-color: #e91e63;
+        color: white;
+        border-color: #c2185b;
+    }
+    
+    .intensity-slider {
+        margin: 20px 0;
+    }
+    
+    .intensity-slider label {
+        display: block;
+        margin-bottom: 10px;
+    }
+    
+    .slider-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .slider-value {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 5px;
+        color: #e91e63;
+    }
+    
+    .samples-container {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        border-left: 4px solid #e91e63;
+    }
+    
+    .sample-dialog {
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="section-header">
+        <h2>セリフ強化</h2>
+        <p>小説内のセリフ部分だけを強化して、より官能的で卑猥な表現にします。物語の展開や地の文は維持されます。</p>
+    </div>
+    
+    <div class="story-preview">
+        <h3>現在の小説:</h3>
+        {{ story.text|truncate(500) }}
+    </div>
+    
+    <form action="{{ url_for('enhance_dialog', story_id=story.id) }}" method="post">
+        <div class="preset-selector">
+            <h4>プリセット選択:</h4>
+            <div class="preset-buttons">
+                {% for preset_id, preset in presets.items() %}
+                    <div class="preset-button" data-preset="{{ preset_id }}">
+                        <input type="radio" name="preset" id="preset-{{ preset_id }}" value="{{ preset_id }}" {% if preset_id == 'standard' %}checked{% endif %} style="display: none;">
+                        <label for="preset-{{ preset_id }}">{{ preset.name }} (強度{{ preset.intensity }})</label>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="preset-description">
+                <p id="selected-preset-desc">{{ presets.standard.description }}</p>
+            </div>
+        </div>
+        
+        <div class="custom-options">
+            <h4>カスタム設定:</h4>
+            
+            <div class="intensity-slider">
+                <label for="intensity">セリフ強化の強度:</label>
+                <div class="slider-container">
+                    <input type="range" id="intensity" name="intensity" min="1" max="5" value="3" class="slider-input">
+                    <div class="slider-labels">
+                        <span>控えめ</span>
+                        <span>バランス</span>
+                        <span>非常に露骨</span>
+                    </div>
+                    <div class="slider-value">強度: <span id="intensity-value">3</span></div>
+                </div>
+            </div>
+            
+            <h4>セリフパターン選択 (複数選択可):</h4>
+            <div class="pattern-options">
+                {% for pattern_type, examples in patterns.items() %}
+                    <div class="pattern-option">
+                        <label>
+                            <input type="checkbox" name="pattern_types" value="{{ pattern_type }}">
+                            <span>{{ pattern_type }}</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="samples-container">
+                <h4 id="sample-title">セリフ例 (標準強化):</h4>
+                <div id="sample-dialogs">
+                    {% for dialog in presets.standard.patterns %}
+                        {% if loop.index <= 2 %}
+                            <div class="sample-dialog">{{ patterns[dialog][0] }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">セリフを強化する</button>
+            <a href="{{ url_for('story', story_id=story.id) }}" class="btn-secondary">キャンセル</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // プリセットボタンの処理
+        const presetButtons = document.querySelectorAll('.preset-button');
+        const presetDesc = document.getElementById('selected-preset-desc');
+        const presetDescriptions = {
+            {% for preset_id, preset in presets.items() %}
+                "{{ preset_id }}": "{{ preset.description }}",
+            {% endfor %}
+        };
+        
+        presetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // ラジオボタンを選択
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // アクティブクラスの切り替え
+                presetButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 説明テキストの更新
+                const presetId = this.dataset.preset;
+                presetDesc.textContent = presetDescriptions[presetId] || "";
+                
+                // サンプルダイアログの更新
+                updateSampleDialogs(presetId);
+                
+                // 強度スライダーの更新
+                updateIntensityFromPreset(presetId);
+                
+                // パターン選択の更新
+                updatePatternSelection(presetId);
+            });
+        });
+        
+        // 初期状態でstandardプリセットをアクティブに
+        document.querySelector('.preset-button[data-preset="standard"]').classList.add('active');
+        
+        // 強度スライダーの処理
+        const intensitySlider = document.getElementById('intensity');
+        const intensityValue = document.getElementById('intensity-value');
+        
+        intensitySlider.addEventListener('input', function() {
+            intensityValue.textContent = this.value;
+        });
+        
+        // プリセットに基づいて強度を更新
+        function updateIntensityFromPreset(presetId) {
+            const presetIntensities = {
+                {% for preset_id, preset in presets.items() %}
+                    "{{ preset_id }}": {{ preset.intensity }},
+                {% endfor %}
+            };
+            
+            if (presetIntensities[presetId]) {
+                intensitySlider.value = presetIntensities[presetId];
+                intensityValue.textContent = presetIntensities[presetId];
+            }
+        }
+        
+        // プリセットに基づいてパターン選択を更新
+        function updatePatternSelection(presetId) {
+            // 一旦全部クリア
+            document.querySelectorAll('input[name="pattern_types"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // プリセットのパターンを選択
+            const presetPatterns = {
+                {% for preset_id, preset in presets.items() %}
+                    "{{ preset_id }}": [{% for pattern in preset.patterns %}"{{ pattern }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+                {% endfor %}
+            };
+            
+            if (presetPatterns[presetId]) {
+                presetPatterns[presetId].forEach(pattern => {
+                    const checkbox = document.querySelector(`input[name="pattern_types"][value="${pattern}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+        }
+        
+        // サンプルダイアログの更新
+        function updateSampleDialogs(presetId) {
+            const sampleTitle = document.getElementById('sample-title');
+            const sampleDialogs = document.getElementById('sample-dialogs');
+            const presetNames = {
+                {% for preset_id, preset in presets.items() %}
+                    "{{ preset_id }}": "{{ preset.name }}",
+                {% endfor %}
+            };
+            
+            const presetPatterns = {
+                {% for preset_id, preset in presets.items() %}
+                    "{{ preset_id }}": [{% for pattern in preset.patterns %}"{{ pattern }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+                {% endfor %}
+            };
+            
+            // タイトル更新
+            sampleTitle.textContent = `セリフ例 (${presetNames[presetId] || "標準"}):`;
+            
+            // サンプル更新
+            sampleDialogs.innerHTML = '';
+            
+            if (presetPatterns[presetId]) {
+                for (let i = 0; i < Math.min(2, presetPatterns[presetId].length); i++) {
+                    const pattern = presetPatterns[presetId][i];
+                    const patternExamples = {{ patterns|tojson }};
+                    
+                    if (patternExamples[pattern] && patternExamples[pattern].length > 0) {
+                        const sampleDiv = document.createElement('div');
+                        sampleDiv.className = 'sample-dialog';
+                        sampleDiv.textContent = patternExamples[pattern][0];
+                        sampleDialogs.appendChild(sampleDiv);
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

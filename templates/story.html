@@ -171,6 +171,24 @@
             color: #e91e63;
         }
         
+        .ai-model-selector {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .ai-model-selector select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #fff;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .ai-model-selector select option {
+            background-color: #333;
+            color: white;
+        }
+        
         @media (max-width: 768px) {
             .preset-options {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -187,6 +205,18 @@
                 <a href="{{ url_for('setting') }}">設定に戻る</a>
                 <a href="{{ url_for('synopsis') }}">あらすじに戻る</a>
             </nav>
+            
+            {% if ai_models %}
+            <div class="ai-model-selector">
+                <form action="{{ url_for('select_model') }}" method="post" style="display: inline-block;">
+                    <select name="model" id="ai-model" onchange="this.form.submit()">
+                        {% for model_id, model_desc in ai_models.items() %}
+                            <option value="{{ model_id }}" {% if current_model and current_model.name == model_id %}selected{% endif %}>{{ model_desc }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            {% endif %}
         </header>
         
         <main>
@@ -196,6 +226,9 @@
                         <h2>第{{ story.chapter }}章 {% if enhanced or story.enhanced %}<span class="enhanced-flag">強化済み</span>{% endif %}</h2>
                         <div class="story-actions">
                             <button id="saveStory" class="btn-secondary">小説を保存</button>
+                            {% if story.id %}
+                                <a href="{{ url_for('enhance_dialog', story_id=story.id) }}" class="btn-primary">セリフを強化</a>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -210,6 +243,7 @@
                             <input type="hidden" name="synopsis_index" value="{{ synopsis_index|default(0) }}">
                             <input type="hidden" name="style" value="{{ style|default('murakami') }}">
                             <input type="hidden" name="chapter" value="{{ story.chapter|int + 1 }}">
+                            <input type="hidden" name="previous_chapter_id" value="{{ story.id }}">
                             
                             <div class="next-chapter-options">
                                 <label for="style-select">文体スタイル:</label>
@@ -279,6 +313,14 @@
                                                 <input type="checkbox" name="presets" value="言葉責め" data-text="卑猥な言葉による精神的興奮を詳細に描写してください。言葉責めのシーンを入れ、言葉がもたらす心理的影響を強調してください。">
                                                 <span>言葉責め</span>
                                             </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="緩やかな誘惑" data-text="直接的な性描写よりも、緩やかな誘惑と性的緊張の高まりを描写してください。触れるか触れないかの境界線での駆け引きを重視してください。">
+                                                <span>緩やかな誘惑</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="激しいクライマックス" data-text="性的絶頂をより激しく、全身を貫く快感として描写してください。連続する絶頂や限界を超えた快感を表現してください。">
+                                                <span>激しいクライマックス</span>
+                                            </label>
                                         </div>
                                     </div>
                                     
@@ -324,6 +366,82 @@
                                             <label class="preset-label">
                                                 <input type="checkbox" name="presets" value="許しと救済" data-text="自己許容や相互理解による心理的救済のテーマを描写してください。葛藤からの解放や自己受容の過程を表現してください。">
                                                 <span>許しと救済</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="力関係の逆転" data-text="キャラクター間の支配と被支配の関係が逆転する展開を描写してください。予想外の力関係の変化がもたらす緊張感を表現してください。">
+                                                <span>力関係の逆転</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="二重の欲望" data-text="キャラクターが相反する二つの欲望に引き裂かれる様子を描写してください。矛盾する欲求がもたらす内的葛藤を表現してください。">
+                                                <span>二重の欲望</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="preset-category">
+                                        <h6>文体要素:</h6>
+                                        <div class="preset-options">
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="ハードボイルド調" data-text="村上龍的なシニカルで冷静な観察眼と都会的な虚無感を強調してください。冷めた視線と熱い肉体描写のコントラストを表現してください。">
+                                                <span>ハードボイルド調</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="文学的比喩" data-text="より高度な文学的比喩や象徴を用いて性的描写を表現してください。直接的表現を避け、想像力を刺激する表現を心がけてください。">
+                                                <span>文学的比喩</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="意識の流れ" data-text="キャラクターの内面を「意識の流れ」手法で描写してください。断片的な思考や感情の揺れ動きを文体で表現してください。">
+                                                <span>意識の流れ</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="心理描写の緻密化" data-text="性的行為中の心理状態をより緻密に描写してください。微細な感情の変化や思考の揺らぎを表現してください。">
+                                                <span>心理描写の緻密化</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="映画的視点" data-text="映画のカメラワークのように視点を変えながら場面を描写してください。クローズアップや引きの描写を織り交ぜてください。">
+                                                <span>映画的視点</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="詩的リズム" data-text="文章のリズムや韻を意識した詩的な表現を取り入れてください。言葉の音楽性を生かした官能表現を心がけてください。">
+                                                <span>詩的リズム</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="断片的文体" data-text="短く断片的な文章を用いて、激しい感情や混乱した状態を表現してください。文の長さやリズムで感情の起伏を表現してください。">
+                                                <span>断片的文体</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="象徴的要素" data-text="性行為や肉体を象徴的に表現する手法を取り入れてください。直接的な描写ではなく、象徴や暗喩で性を表現してください。">
+                                                <span>象徴的要素</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="preset-category">
+                                        <h6>物語構造:</h6>
+                                        <div class="preset-options">
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="並行する物語" data-text="二つの視点や時間軸を並行して描写してください。異なる視点から同じ出来事を描くなど、複層的な語りを展開してください。">
+                                                <span>並行する物語</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="回想手法" data-text="現在の行為と過去の記憶を交互に描写する手法を用いてください。記憶と現実が交錯する表現を心がけてください。">
+                                                <span>回想手法</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="循環構造" data-text="物語が始点に戻るような循環的な構造を取り入れてください。同じモチーフや言葉が繰り返し現れる構成にしてください。">
+                                                <span>循環構造</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="夢と現実の融合" data-text="夢と現実の境界を曖昧にする表現を取り入れてください。意識と無意識が入り混じるような描写を心がけてください。">
+                                                <span>夢と現実の融合</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="緩やかな緊張" data-text="性的緊張を徐々に高めていく構成を取り入れてください。微細な仕草や反応の積み重ねで緊張を高める手法を用いてください。">
+                                                <span>緩やかな緊張</span>
+                                            </label>
+                                            <label class="preset-label">
+                                                <input type="checkbox" name="presets" value="複数のクライマックス" data-text="物語の中に複数の小さなクライマックスを設けてください。緊張と解放のリズムを繰り返し表現してください。">
+                                                <span>複数のクライマックス</span>
                                             </label>
                                         </div>
                                     </div>
@@ -493,8 +611,17 @@
                         }
                     });
                     
+                    // 保存されている値を保持して追加する
+                    const existingText = directionTextarea.value;
+                    const existingUserText = existingText && !selectedPresets.length ? existingText : '';
+                    
+                    // Add literary quality enforcement
+                    if (combinedText) {
+                        combinedText += "\n【重要】性的描写は村上龍のような文学的表現を用い、年齢表記やバストサイズなどの直接的な数値表現は避けてください。徹底的な描写と比喩表現で読者の創造性を掻き立てる表現にしてください。\n";
+                    }
+                    
                     // Set to textarea
-                    directionTextarea.value = combinedText.trim();
+                    directionTextarea.value = existingUserText + (existingUserText && combinedText ? '\n\n' : '') + combinedText.trim();
                 }
             }
         });

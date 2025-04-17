@@ -28,9 +28,10 @@ def enhance_character_psychology(story_text, character_data):
     3. キャラクターの基本的な性格
     
     文字数は原文の1.2〜1.5倍程度に拡張してください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=6000)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=7000, temperature=0.9)
     return enhanced_text
 
 def enhance_emotional_arc(story_text):
@@ -54,9 +55,10 @@ def enhance_emotional_arc(story_text):
     3. 基本的なストーリーの流れ
     
     文体や表現の露骨さはそのままに、より感情的な深みと読み応えのある内容にしてください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=6000)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=7000, temperature=0.9)
     return enhanced_text
 
 def enhance_sensory_descriptions(story_text):
@@ -81,9 +83,10 @@ def enhance_sensory_descriptions(story_text):
     4. 性的興奮の高まりを感覚的変化で表現
     
     卑猥な表現や淫語は維持しつつ、より官能的で没入感のある描写にしてください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=6000)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=7000, temperature=0.9)
     return enhanced_text
 
 def enhance_character_voice(story_text, character_data):
@@ -111,9 +114,10 @@ def enhance_character_voice(story_text, character_data):
     3. 性的嗜好を反映した表現の使い分け
     
     キャラクターの個性をより鮮明に表現しつつ、卑猥な表現は維持または強化してください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=6000)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=7000, temperature=0.9)
     return enhanced_text
 
 def add_psychological_themes(story_text):
@@ -139,9 +143,10 @@ def add_psychological_themes(story_text):
     4. 性的シーンをより広いテーマの文脈に位置づける
     
     露骨な性描写と心理的深みを両立させた、より文学的な作品に仕上げてください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     """
     
-    enhanced_text = grok_api.generate_text(prompt, max_tokens=6000)
+    enhanced_text = grok_api.generate_text(prompt, max_tokens=7000, temperature=0.9)
     return enhanced_text
 
 def generate_scene_prompts(story_text, num_scenes=3):
@@ -162,6 +167,7 @@ def generate_scene_prompts(story_text, num_scenes=3):
     
     成人向けの絵を生成するためのプロンプトであることを前提に、
     必要な性的要素や体位、行為の詳細を具体的に含めてください。
+    過激で卑猥な表現を多用し、読者の興奮を極限まで高めてください。
     
     以下の形式で出力してください：
     
@@ -185,19 +191,16 @@ def generate_scene_prompts(story_text, num_scenes=3):
     ...
     """
     
-    return grok_api.generate_text(prompt, max_tokens=4000)
+    return grok_api.generate_text(prompt, max_tokens=5000, temperature=0.9)
 
 def enhance_story(story_id, options):
     """物語を複数の方法で強化する総合関数"""
-    # 物語データを取得
     story_data = story_service.load_story(story_id)
     if not story_data:
         return {"error": "指定された物語が見つかりません"}
     
-    # 元のテキスト
     original_text = story_data.get("text", "")
     
-    # 設定データを取得
     setting_id = story_data.get("setting_id")
     if setting_id:
         setting_data = setting_service.load_setting(setting_id)
@@ -207,10 +210,8 @@ def enhance_story(story_id, options):
         setting_id = synopsis_data.get("setting_id") if synopsis_data else None
         setting_data = setting_service.load_setting(setting_id) if setting_id else {}
     
-    # 適用するエンハンスメントの種類を決定
     enhanced_text = original_text
     
-    # 順に処理していく
     if options.get("enhance_psychology", False) and setting_data:
         print("Enhancing character psychology...")
         enhanced_text = enhance_character_psychology(enhanced_text, setting_data.get("characters", []))
@@ -231,15 +232,13 @@ def enhance_story(story_id, options):
         print("Adding psychological themes...")
         enhanced_text = add_psychological_themes(enhanced_text)
     
-    # 新しい物語データを保存
     enhanced_story_id = str(uuid.uuid4())
-    enhanced_story_data = dict(story_data)  # 元のデータをコピー
+    enhanced_story_data = dict(story_data)
     enhanced_story_data["text"] = enhanced_text
     enhanced_story_data["enhanced"] = True
     enhanced_story_data["enhancement_options"] = options
     enhanced_story_data["original_story_id"] = story_id
     
-    # 新しいストーリーIDで保存
     story_service.save_story(enhanced_story_id, enhanced_story_data)
     
     return {

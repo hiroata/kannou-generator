@@ -2,7 +2,7 @@ import requests
 import json
 from config import GROK_API_KEY, GROK_API_URL
 
-def generate_text(prompt, max_tokens=4000, temperature=0.8):
+def generate_text(prompt, max_tokens=4000, temperature=0.9, presence_penalty=0.5, frequency_penalty=0.3):
     """
     X.AIのGrok APIを使用してテキストを生成する
     
@@ -10,6 +10,8 @@ def generate_text(prompt, max_tokens=4000, temperature=0.8):
         prompt (str): 生成プロンプト
         max_tokens (int): 生成する最大トークン数
         temperature (float): 生成の多様性を制御するパラメータ (0.0〜1.0)
+        presence_penalty (float): 新しいトピックや単語の使用を促進するパラメータ
+        frequency_penalty (float): 既に使用された単語の繰り返しを抑制するパラメータ
     
     Returns:
         str: 生成されたテキスト
@@ -23,12 +25,12 @@ def generate_text(prompt, max_tokens=4000, temperature=0.8):
     # temperatureを高めに設定して、より創造的な応答を促進
     data = {
         "model": "grok-3-latest",
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [{"role": "user", "content": prompt + "\n\n過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください。"}],
         "max_tokens": max_tokens,
-        "temperature": temperature,  # 0.7〜0.9の間で調整すると良い
-        "top_p": 0.95,  # より多様な出力を可能に
-        "presence_penalty": 0.2,  # 繰り返しを減らす
-        "frequency_penalty": 0.1  # 頻出表現の抑制を軽減
+        "temperature": temperature,  # 0.9に設定
+        "top_p": 0.95,              # 多様性を維持
+        "presence_penalty": presence_penalty,  # 0.5に設定
+        "frequency_penalty": frequency_penalty  # 0.3に設定
     }
     
     try:

@@ -13,7 +13,7 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
         synopsis_id (str): あらすじID
         synopsis_index (int): あらすじのインデックス
         model (str): 使用するモデル ('grok' のみサポート)
-        style (str): 文体スタイル ('murakami' または 'dan')
+        style (str): 文体スタイル ('murakami' または 'dan' または 'eromanga')
         chapter (int): 生成する章番号
         direction (str): 次の章の方向性に関する指示（オプション）
         enhance_options (dict): 強化オプション
@@ -22,7 +22,7 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
             - enhance_sensory (bool): 五感表現の強化
             - enhance_voice (bool): キャラクターの声の一貫化
             - add_psychological_themes (bool): 心理的テーマの追加
-            - explicitness_level (int): 露骨さレベル (1-5)
+            - explicitness_level (int): 露骨さレベル (1-6)
     
     Returns:
         dict: 生成された小説
@@ -35,7 +35,7 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
             "enhance_sensory": True,
             "enhance_voice": True,
             "add_psychological_themes": False,
-            "explicitness_level": 3
+            "explicitness_level": 4  # デフォルトを4に変更
         }
     
     # モデルの強制
@@ -77,16 +77,17 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
         target_length = "800文字から1200文字"
     
     # 露骨さレベルの説明
-    explicitness_level = enhance_options.get("explicitness_level", 3)
+    explicitness_level = enhance_options.get("explicitness_level", 4)
     explicitness_descriptions = {
         1: "非常に控えめで文学的。性的な内容は主に比喩と象徴で表現。直接的な性表現はほとんど使わず、文学的表現に終始。",
         2: "控えめながら暗示的。性的内容は主に比喩的表現を用い、直接的表現は最小限。情緒的・心理的描写を重視。",
         3: "バランスの取れた表現。性的内容は比較的直接的に描写されるが、文学的表現と組み合わせる。",
         4: "より直接的。性的表現は遠慮なく描写されるが、文学的比喩も使用。登場人物の内面描写と肉体描写のバランスを保つ。",
-        5: "強烈で生々しい表現。性的内容は非常に直接的かつ詳細に描写される。村上龍風の都会的で冷たい視線と生々しい描写。"
+        5: "強烈で生々しい表現。性的内容は非常に直接的かつ詳細に描写される。村上龍風の都会的で冷たい視線と生々しい描写。",
+        6: "極端に露骨で異常。性的内容を異常なまでに詳細かつ過激に描写し、卑猥な言葉や淫語を極限まで多用。読者の興奮を極端に煽る表現を追求。"
     }
     
-    explicitness_instruction = explicitness_descriptions.get(explicitness_level, explicitness_descriptions[3])
+    explicitness_instruction = explicitness_descriptions.get(explicitness_level, explicitness_descriptions[4])
     
     # 前章からの方向性が指定されているかチェック
     direction_instruction = ""
@@ -107,6 +108,49 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
     6. 性行為を単なる肉体的行為としてではなく、心理的・象徴的な意味合いを持つ出来事として描写してください。
     """
     
+    # 前章の内容を取得して物語の連続性を確保する
+    previous_chapter_text = ""
+    continuation_instruction = ""
+    
+    if chapter > 1:
+        # 前章のストーリーを探す
+        story_dir = os.path.join("data", "stories")
+        previous_chapters = []
+        
+        if os.path.exists(story_dir):
+            for filename in os.listdir(story_dir):
+                if filename.endswith(".json"):
+                    story_path = os.path.join(story_dir, filename)
+                    try:
+                        with open(story_path, 'r', encoding='utf-8') as f:
+                            story_data = json.load(f)
+                            if (story_data.get("synopsis_id") == synopsis_id and 
+                                story_data.get("synopsis_index") == synopsis_index and
+                                story_data.get("chapter") == chapter - 1):
+                                previous_chapters.append(story_data)
+                    except Exception as e:
+                        print(f"Error loading story {filename}: {e}")
+        
+        # 前章が見つかった場合、それをプロンプトに含める
+        if previous_chapters:
+            previous_chapter = previous_chapters[0]
+            previous_chapter_text = f"""
+            前章（第{chapter-1}章）の内容:
+            {previous_chapter.get("text", "")}
+            """
+            
+            continuation_instruction = f"""
+            【最重要】これは第{chapter}章であり、前章からの直接の続きです。以下の点に注意してください：
+            1. 物語を最初から始めない。前章の続きとして執筆してください。
+            2. 前章で確立されたキャラクターの関係性や状況を正確に維持してください。
+            3. 前章で起きた出来事を踏まえて話を展開させてください。
+            4. 登場人物を新たに紹介しないでください。既に紹介されています。
+            5. 新しいストーリーラインを突然導入せず、前章からの自然な流れを保ってください。
+            6. 時系列上、前章の直後の出来事として描写してください。
+            7. 前章で築かれた性的な緊張感や関係性の発展を続けてください。
+            """
+    
+    # プロンプトの強化
     prompt = f"""
     あなたは18禁官能小説の作家です。以下の設定とあらすじに基づいて、{writing_style}で小説の第{chapter}章を書いてください。
     これは{story_part}
@@ -116,6 +160,10 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
     
     あらすじ:
     {json.dumps(selected_synopsis, ensure_ascii=False)}
+    
+    {previous_chapter_text}
+    
+    {continuation_instruction}
     
     {direction_instruction}
     
@@ -132,12 +180,14 @@ def generate_story(synopsis_id, synopsis_index=0, model="grok", style="murakami"
     5. 読者を引き込む官能的な展開を心がける。
     6. 選択した文体の特徴を強く反映させる。
     7. 年齢や具体的サイズの直接表記は避け、代わりに文学的表現を用いる。
+    8. 過激で卑猥な表現を多用し、読者の興奮を最大限に高めてください。
+    9. 日本のエロ同人マンガ風のオノマトペ（ズチュッ、グチョッ）や淫語を積極的に使用してください。
     
     章のタイトルをつけて、小説を執筆してください。改行を適切に使用し、読みやすくしてください。
     """
     
     # Grok API呼び出し（temperatureを上げて創造性を高める）
-    story_text = grok_api.generate_text(prompt, max_tokens=4000, temperature=0.8)
+    story_text = grok_api.generate_text(prompt, max_tokens=5000, temperature=0.9)
     
     # エラーチェック
     if story_text.startswith("エラーが発生しました"):
