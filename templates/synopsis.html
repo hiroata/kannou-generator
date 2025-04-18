@@ -75,12 +75,51 @@
             color: #666;
         }
         
+        /* モデル選択スタイル */
+        .model-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .model-tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .model-tab:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .model-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #4caf50;
+        }
+        
+        .model-description {
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            background-color: #f0f8f0;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
         @media (max-width: 768px) {
-            .style-tabs {
+            .style-tabs, .model-tabs {
                 flex-wrap: wrap;
             }
             
-            .style-tab {
+            .style-tab, .model-tab {
                 flex: 1 0 auto;
                 text-align: center;
                 margin-bottom: -1px;
@@ -109,7 +148,17 @@
                             <form action="{{ url_for('story') }}" method="post" class="synopsis-form">
                                 <input type="hidden" name="synopsis_index" value="0">
                                 <input type="hidden" name="style" value="murakami" class="synopsis-style-input">
+                                <input type="hidden" name="model" value="{{ model|default('grok') }}" class="synopsis-model-input">
                                 <input type="hidden" name="chapter" value="1">
+                                
+                                <div class="model-tabs synopsis-model-tabs">
+                                    <div class="model-tab {% if model == 'grok' or not model %}active{% endif %}" data-model="grok">Grok-3</div>
+                                    <div class="model-tab {% if model == 'gemini' %}active{% endif %}" data-model="gemini">Gemini-2.5</div>
+                                </div>
+                                
+                                <div class="model-description synopsis-model-description">
+                                    <!-- JavaScriptで動的に表示 -->
+                                </div>
                                 
                                 <div class="style-tabs synopsis-style-tabs">
                                     <div class="style-tab active" data-style="murakami">村上龍</div>
@@ -129,6 +178,7 @@
                             
                             <form action="{{ url_for('synopsis') }}" method="post" style="margin-top: 15px;">
                                 <input type="hidden" name="style" value="murakami">
+                                <input type="hidden" name="model" value="{{ model|default('grok') }}">
                                 <button type="submit" class="btn-secondary">別のあらすじを生成</button>
                             </form>
                         </div>
@@ -148,7 +198,17 @@
                                 <form action="{{ url_for('story') }}" method="post" class="synopsis-form">
                                     <input type="hidden" name="synopsis_index" value="{{ loop.index0 }}">
                                     <input type="hidden" name="style" value="murakami" class="synopsis-style-input">
+                                    <input type="hidden" name="model" value="{{ model|default('grok') }}" class="synopsis-model-input">
                                     <input type="hidden" name="chapter" value="1">
+                                    
+                                    <div class="model-tabs synopsis-model-tabs">
+                                        <div class="model-tab {% if model == 'grok' or not model %}active{% endif %}" data-model="grok">Grok-3</div>
+                                        <div class="model-tab {% if model == 'gemini' %}active{% endif %}" data-model="gemini">Gemini-2.5</div>
+                                    </div>
+                                    
+                                    <div class="model-description synopsis-model-description">
+                                        <!-- JavaScriptで動的に表示 -->
+                                    </div>
                                     
                                     <div class="style-tabs synopsis-style-tabs">
                                         <div class="style-tab active" data-style="murakami">村上龍</div>
@@ -168,6 +228,7 @@
                                         
                                         <form action="{{ url_for('synopsis') }}" method="post">
                                             <input type="hidden" name="style" value="murakami">
+                                            <input type="hidden" name="model" value="{{ model|default('grok') }}">
                                             <button type="submit" class="btn-secondary">あらすじを再生成</button>
                                         </form>
                                     </div>
@@ -220,6 +281,19 @@
                     
                     <form action="{{ url_for('synopsis') }}" method="post" id="synopsis-form">
                         <input type="hidden" name="style" value="murakami" id="synopsis-style-input">
+                        <input type="hidden" name="model" value="{{ model|default('grok') }}" id="synopsis-model-input">
+                        
+                        <div class="form-group">
+                            <label>使用モデル:</label>
+                            <div class="model-tabs">
+                                <div class="model-tab {% if model == 'grok' or not model %}active{% endif %}" data-model="grok">Grok-3</div>
+                                <div class="model-tab {% if model == 'gemini' %}active{% endif %}" data-model="gemini">Gemini-2.5</div>
+                            </div>
+                            
+                            <div id="synopsis-model-description" class="model-description">
+                                <!-- JavaScriptで動的に表示 -->
+                            </div>
+                        </div>
                         
                         <div class="form-group">
                             <label>文体スタイル:</label>
@@ -262,8 +336,23 @@
             "eromanga": "エロ同人マンガのような過激で卑猥な表現を追求する文体。オノマトペや直接的なセリフを多用し、視覚的で即物的な描写が特徴です。"
         };
         
+        // モデルの説明
+        const modelDescriptions = {
+            "grok": "X.AI社の最新言語モデルGrok-3を使用します。より創造的で大胆な表現が可能です。",
+            "gemini": "GoogleのGemini 2.5モデルを使用します。より洗練された文章構成と表現力が特徴です。"
+        };
+        
         // タブ選択の処理
-        function initStyleTabs() {
+        function initAllTabs() {
+            // スタイルタブとモデルタブを初期化
+            initMainTabs();
+            
+            // あらすじカードのタブを初期化
+            initSynopsisTabs();
+        }
+        
+        // メインタブの初期化
+        function initMainTabs() {
             // メインのスタイルタブ
             const styleTabs = document.querySelectorAll('.style-tabs:not(.synopsis-style-tabs) .style-tab');
             const styleInput = document.getElementById('synopsis-style-input');
@@ -294,42 +383,104 @@
                 }
             }
             
-            // あらすじカードのスタイルタブ（複数ある可能性）
-            const synopsisForms = document.querySelectorAll('.synopsis-form');
+            // メインのモデルタブ
+            const modelTabs = document.querySelectorAll('.model-tabs:not(.synopsis-model-tabs) .model-tab');
+            const modelInput = document.getElementById('synopsis-model-input');
+            const modelDesc = document.getElementById('synopsis-model-description');
             
-            synopsisForms.forEach(form => {
-                const tabs = form.querySelectorAll('.synopsis-style-tabs .style-tab');
-                const input = form.querySelector('.synopsis-style-input');
-                const desc = form.querySelector('.synopsis-style-description');
-                
-                tabs.forEach(tab => {
+            if (modelTabs.length > 0) {
+                modelTabs.forEach(tab => {
                     tab.addEventListener('click', function() {
                         // タブの見た目を変更
-                        tabs.forEach(t => t.classList.remove('active'));
+                        modelTabs.forEach(t => t.classList.remove('active'));
                         this.classList.add('active');
                         
-                        // スタイル値を設定
-                        const style = this.getAttribute('data-style');
-                        if (input) input.value = style;
+                        // モデル値を設定
+                        const model = this.getAttribute('data-model');
+                        if (modelInput) modelInput.value = model;
                         
                         // 説明を表示
-                        if (desc) {
-                            desc.textContent = styleDescriptions[style] || '';
+                        if (modelDesc) {
+                            modelDesc.textContent = modelDescriptions[model] || '';
                         }
                     });
                 });
                 
                 // 初期表示
-                const activeTab = form.querySelector('.synopsis-style-tabs .style-tab.active');
-                if (activeTab && desc) {
-                    desc.textContent = styleDescriptions[activeTab.getAttribute('data-style')] || '';
+                const activeModelTab = document.querySelector('.model-tabs:not(.synopsis-model-tabs) .model-tab.active');
+                if (activeModelTab && modelDesc) {
+                    modelDesc.textContent = modelDescriptions[activeModelTab.getAttribute('data-model')] || '';
+                }
+            }
+        }
+        
+        // あらすじカードのタブを初期化
+        function initSynopsisTabs() {
+            // あらすじカードのスタイルタブとモデルタブ（複数ある可能性）
+            const synopsisForms = document.querySelectorAll('.synopsis-form');
+            
+            synopsisForms.forEach(form => {
+                // スタイルタブの初期化
+                const styleTabs = form.querySelectorAll('.synopsis-style-tabs .style-tab');
+                const styleInput = form.querySelector('.synopsis-style-input');
+                const styleDesc = form.querySelector('.synopsis-style-description');
+                
+                styleTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        styleTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // スタイル値を設定
+                        const style = this.getAttribute('data-style');
+                        if (styleInput) styleInput.value = style;
+                        
+                        // 説明を表示
+                        if (styleDesc) {
+                            styleDesc.textContent = styleDescriptions[style] || '';
+                        }
+                    });
+                });
+                
+                // スタイルタブの初期表示
+                const activeStyleTab = form.querySelector('.synopsis-style-tabs .style-tab.active');
+                if (activeStyleTab && styleDesc) {
+                    styleDesc.textContent = styleDescriptions[activeStyleTab.getAttribute('data-style')] || '';
+                }
+                
+                // モデルタブの初期化
+                const modelTabs = form.querySelectorAll('.synopsis-model-tabs .model-tab');
+                const modelInput = form.querySelector('.synopsis-model-input');
+                const modelDesc = form.querySelector('.synopsis-model-description');
+                
+                modelTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        modelTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // モデル値を設定
+                        const model = this.getAttribute('data-model');
+                        if (modelInput) modelInput.value = model;
+                        
+                        // 説明を表示
+                        if (modelDesc) {
+                            modelDesc.textContent = modelDescriptions[model] || '';
+                        }
+                    });
+                });
+                
+                // モデルタブの初期表示
+                const activeModelTab = form.querySelector('.synopsis-model-tabs .model-tab.active');
+                if (activeModelTab && modelDesc) {
+                    modelDesc.textContent = modelDescriptions[activeModelTab.getAttribute('data-model')] || '';
                 }
             });
         }
         
         // ページ読み込み時に初期化
         document.addEventListener('DOMContentLoaded', function() {
-            initStyleTabs();
+            initAllTabs();
         });
     </script>
 </body>

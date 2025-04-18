@@ -1,9 +1,8 @@
 import os
 import json
 import uuid
-from api import grok_api
-from services import setting_service
-from config import WRITING_STYLES
+import importlib
+from config import AVAILABLE_MODELS, WRITING_STYLES
 
 def generate_synopses(setting_id, model="grok", style="murakami", num_synopses=1):
     """
@@ -11,20 +10,29 @@ def generate_synopses(setting_id, model="grok", style="murakami", num_synopses=1
     
     Args:
         setting_id (str): 設定ID
-        model (str): 使用するモデル ('grok' のみサポート)
+        model (str): 使用するモデル ('grok', 'gemini')
         style (str): 文体スタイル ('murakami' または 'dan')
         num_synopses (int): 生成するあらすじの数
     
     Returns:
         dict: 生成されたあらすじを含む辞書
     """
+    # モデル指定がない場合はgrokをデフォルトに
+    if not model in AVAILABLE_MODELS:
+        model = "grok"
+        
+    # APIモジュールの動的インポート
+    api_module_name = AVAILABLE_MODELS[model]["api_module"]
+    try:
+        api_module = importlib.import_module(f"api.{api_module_name}")
+    except ImportError:
+        return {"error": f"APIモジュール {api_module_name} のインポートに失敗しました"}
+    
     # 設定の読み込み
+    from services import setting_service
     setting_data = setting_service.load_setting(setting_id)
     if not setting_data:
         return {"error": "設定が見つかりません"}
-    
-    # モデルの強制
-    model = "grok"  # 現在はgrokのみサポート
     
     # 文体の選択
     writing_style = WRITING_STYLES.get(style, WRITING_STYLES["murakami"])
@@ -66,8 +74,8 @@ def generate_synopses(setting_id, model="grok", style="murakami", num_synopses=1
     必ず完全かつ構文的に有効なJSONを返してください。
     """
     
-    # Grok APIを呼び出し
-    response = grok_api.generate_text(prompt, max_tokens=4000)
+    # API呼び出し
+    response = api_module.generate_text(prompt, max_tokens=4000)
     
     # レスポンスがAPIエラーメッセージを含むかチェック
     if response.startswith("エラーが発生しました"):
@@ -106,8 +114,13 @@ def generate_synopses(setting_id, model="grok", style="murakami", num_synopses=1
                     synopsis[field] = "情報なし"
                     
             # titleがメソッドの場合の対応
-            if not isinstance(synopsis.get("title", ""), str) or callable(synopsis.get("title")):
+            if not isinstance(synopsis.get("title", ""), str):
                 synopsis["title"] = "無題のあらすじ"
+            
+            # 各フィールドが文字列であることを確認
+            for field in ["title", "導入部", "展開", "クライマックス", "結末"]:
+                if field in synopsis and not isinstance(synopsis[field], str):
+                    synopsis[field] = str(synopsis[field])
         
     except json.JSONDecodeError as e:
         print(f"JSON Parse error: {e}")
@@ -120,7 +133,7 @@ def generate_synopses(setting_id, model="grok", style="murakami", num_synopses=1
     
     # あらすじの保存
     synopsis_id = str(uuid.uuid4())
-    save_synopsis(synopsis_id, synopses_data, setting_id)
+    save_synopsis(synopsis_id, synopses_data, setting_id, model)
     
     return {"id": synopsis_id, "synopses": synopses_data}
 
@@ -172,14 +185,16 @@ def extract_json(text):
     # 完全なJSONが見つからなかった場合
     return None
 
-def save_synopsis(synopsis_id, synopses_data, setting_id):
+def save_synopsis(synopsis_id, synopses_data, setting_id, model="grok"):
     """あらすじをファイルに保存する"""
     filepath = os.path.join("data", "synopses", f"{synopsis_id}.json")
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     
-    # 設定IDを含める
+    # 設定IDとモデル情報を含める
     data = {
         "setting_id": setting_id,
-        "synopses": synopses_data
+        "synopses": synopses_data,
+        "model": model
     }
     
     with open(filepath, 'w', encoding='utf-8') as f:

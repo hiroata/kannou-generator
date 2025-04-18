@@ -74,12 +74,51 @@
             color: #666;
         }
         
+        /* モデル選択スタイル */
+        .model-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .model-tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .model-tab:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .model-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #4caf50;
+        }
+        
+        .model-description {
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            background-color: #f0f8f0;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
         @media (max-width: 768px) {
-            .style-tabs {
+            .style-tabs, .model-tabs {
                 flex-wrap: wrap;
             }
             
-            .style-tab {
+            .style-tab, .model-tab {
                 flex: 1 0 auto;
                 text-align: center;
                 margin-bottom: -1px;
@@ -106,6 +145,19 @@
                 
                 <form action="{{ url_for('custom_setting') }}" method="post" id="custom-form">
                     <input type="hidden" name="style" value="murakami" id="custom-style-input">
+                    <input type="hidden" name="model" value="grok" id="custom-model-input">
+                    
+                    <div class="form-group">
+                        <label>使用モデル:</label>
+                        <div class="model-tabs">
+                            <div class="model-tab active" data-model="grok">Grok-3</div>
+                            <div class="model-tab" data-model="gemini">Gemini-2.5</div>
+                        </div>
+                        
+                        <div id="custom-model-description" class="model-description">
+                            <!-- JavaScriptで動的に表示 -->
+                        </div>
+                    </div>
                     
                     <div class="form-group">
                         <label>文体スタイル:</label>
@@ -152,7 +204,22 @@
             "eromanga": "エロ同人マンガのような過激で卑猥な表現を追求する文体。オノマトペや直接的なセリフを多用し、視覚的で即物的な描写が特徴です。"
         };
         
+        // モデルの説明
+        const modelDescriptions = {
+            "grok": "X.AI社の最新言語モデルGrok-3を使用します。より創造的で大胆な表現が可能です。",
+            "gemini": "GoogleのGemini 2.5モデルを使用します。より洗練された文章構成と表現力が特徴です。"
+        };
+        
         // タブ選択の処理
+        function initAllTabs() {
+            // スタイルタブの初期化
+            initStyleTabs();
+            
+            // モデルタブの初期化
+            initModelTabs();
+        }
+        
+        // スタイルタブの初期化
         function initStyleTabs() {
             const styleTabs = document.querySelectorAll('.style-tab');
             const styleInput = document.getElementById('custom-style-input');
@@ -184,9 +251,41 @@
             }
         }
         
+        // モデルタブの初期化
+        function initModelTabs() {
+            const modelTabs = document.querySelectorAll('.model-tab');
+            const modelInput = document.getElementById('custom-model-input');
+            const modelDesc = document.getElementById('custom-model-description');
+            
+            if (modelTabs.length > 0) {
+                modelTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        modelTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // モデル値を設定
+                        const model = this.getAttribute('data-model');
+                        modelInput.value = model;
+                        
+                        // 説明を表示
+                        if (modelDesc) {
+                            modelDesc.textContent = modelDescriptions[model] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = document.querySelector('.model-tab.active');
+                if (activeTab && modelDesc) {
+                    modelDesc.textContent = modelDescriptions[activeTab.getAttribute('data-model')] || '';
+                }
+            }
+        }
+        
         // ページ読み込み時に初期化
         document.addEventListener('DOMContentLoaded', function() {
-            initStyleTabs();
+            initAllTabs();
         });
     </script>
 </body>

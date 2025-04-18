@@ -2,8 +2,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from markupsafe import Markup
 import os
+import importlib
 from services import setting_service, synopsis_service, story_service, enhancement_service, dialog_service
-from api import grok_api  # Grok 3専用のAPIモジュール
+from config import AVAILABLE_MODELS
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -18,15 +19,17 @@ def nl2br_filter(text):
 @app.route('/')
 def index():
     """トップページ"""
-    return render_template('index.html')
+    return render_template('index.html', available_models=AVAILABLE_MODELS)
 
 @app.route('/custom_setting', methods=['POST'])
 def custom_setting():
     """カスタム設定からの生成処理"""
     custom_scenario = request.form.get('custom_scenario', '')
     style = request.form.get('style', 'murakami')  # スタイルの取得
+    model = request.form.get('model', 'grok')  # モデル選択
+    
     result = setting_service.generate_setting_from_scenario(
-        model="grok",  # Grok 3に固定
+        model=model,
         scenario=custom_scenario
     )
     if "error" in result.get("setting", {}):
@@ -34,6 +37,7 @@ def custom_setting():
         return redirect(url_for('index'))
     session['setting_id'] = result['id']
     session['style'] = style  # セッションにスタイルを保存
+    session['model'] = model  # セッションにモデルを保存
     return redirect(url_for('synopsis_direct'))
 
 @app.route('/setting', methods=['GET', 'POST'])
@@ -43,18 +47,21 @@ def setting():
         setting_type = request.form.get('setting_type', '一般')
         additional_details = request.form.get('additional_details', '')
         style = request.form.get('style', 'murakami')  # スタイルの取得
+        model = request.form.get('model', 'grok')  # モデル選択
+        
         result = setting_service.generate_setting(
-            model="grok",  # Grok 3に固定
+            model=model,
             setting_type=setting_type,
             additional_details=additional_details
         )
         if "error" in result.get("setting", {}):
             flash(f"設定の生成中にエラーが発生しました: {result['setting'].get('error', '不明なエラー')}")
-            return render_template('setting.html')
+            return render_template('setting.html', available_models=AVAILABLE_MODELS)
         session['setting_id'] = result['id']
         session['style'] = style  # セッションにスタイルを保存
+        session['model'] = model  # セッションにモデルを保存
         return redirect(url_for('synopsis'))
-    return render_template('setting.html')
+    return render_template('setting.html', available_models=AVAILABLE_MODELS)
 
 @app.route('/synopsis_direct', methods=['GET'])
 def synopsis_direct():
@@ -68,30 +75,31 @@ def synopsis_direct():
         flash(f"設定データ(ID: {setting_id})の読み込みに失敗しました。")
         return redirect(url_for('index'))
     
-    # スタイルをセッションから取得
+    # スタイルとモデルをセッションから取得
     style = session.get('style', 'murakami')
+    model = session.get('model', 'grok')
     
     synopsis_result = synopsis_service.generate_synopses(
         setting_id,
-        model="grok",  # Grok 3に固定
+        model=model,
         style=style,
         num_synopses=1
     )
     synopses = synopsis_result.get('synopses', [])
     if "error" in synopsis_result or not synopses:
         flash(f"あらすじの生成中にエラーが発生しました: {synopsis_result.get('error', '不明なエラー')}")
-        return render_template('synopsis.html', setting=setting_data)
+        return render_template('synopsis.html', setting=setting_data, available_models=AVAILABLE_MODELS)
     session['synopsis_id'] = synopsis_result['id']
     story_result = story_service.generate_story(
         synopsis_result['id'], 0,
-        model="grok",  # Grok 3に固定
+        model=model,
         style=style,
         chapter=1
     )
     if "error" in story_result:
         flash(f"第1話の生成中にエラーが発生しました: {story_result.get('error', '不明なエラー')}")
-        return render_template('synopsis.html', synopses=synopses, setting=setting_data)
-    return render_template('story.html', story=story_result, synopsis_index=0, style=style)
+        return render_template('synopsis.html', synopses=synopses, setting=setting_data, available_models=AVAILABLE_MODELS)
+    return render_template('story.html', story=story_result, synopsis_index=0, style=style, model=model, available_models=AVAILABLE_MODELS)
 
 @app.route('/synopsis', methods=['GET', 'POST'])
 def synopsis():
@@ -106,20 +114,23 @@ def synopsis():
         return redirect(url_for('setting'))
     if request.method == 'POST':
         style = request.form.get('style', 'murakami')
+        model = request.form.get('model', 'grok')  # モデル選択
         session['style'] = style  # セッションにスタイルを保存
+        session['model'] = model  # セッションにモデルを保存
+        
         result = synopsis_service.generate_synopses(
             setting_id,
-            model="grok",  # Grok 3に固定
+            model=model,
             style=style,
             num_synopses=1
         )
         synopses = result.get('synopses', [])
         if "error" in result or not synopses:
             flash(f"あらすじの生成中にエラーが発生しました: {result.get('error', '不明なエラー')}")
-            return render_template('synopsis.html', setting=setting_data)
+            return render_template('synopsis.html', setting=setting_data, available_models=AVAILABLE_MODELS)
         session['synopsis_id'] = result['id']
-        return render_template('synopsis.html', synopses=synopses, setting=setting_data, style=style)
-    return render_template('synopsis.html', setting=setting_data, style=session.get('style', 'murakami'))
+        return render_template('synopsis.html', synopses=synopses, setting=setting_data, style=style, model=model, available_models=AVAILABLE_MODELS)
+    return render_template('synopsis.html', setting=setting_data, style=session.get('style', 'murakami'), model=session.get('model', 'grok'), available_models=AVAILABLE_MODELS)
 
 @app.route('/story', methods=['GET', 'POST'])
 def story():
@@ -134,7 +145,10 @@ def story():
         return redirect(url_for('synopsis') if session.get('setting_id') else url_for('setting'))
     if request.method == 'POST':
         style = request.form.get('style', 'murakami')
+        model = request.form.get('model', 'grok')  # モデル選択
         session['style'] = style  # セッションにスタイルを保存
+        session['model'] = model  # セッションにモデルを保存
+        
         synopsis_index = int(request.form.get('synopsis_index', 0))
         chapter = int(request.form.get('chapter', 1))
         next_chapter_direction = request.form.get('next_chapter_direction', '')
@@ -167,7 +181,7 @@ def story():
         
         result = story_service.generate_story(
             synopsis_id, synopsis_index,
-            model="grok",  # Grok 3に固定
+            model=model,
             style=style,
             chapter=chapter,
             direction=next_chapter_direction,
@@ -176,7 +190,7 @@ def story():
         
         if "error" in result:
             flash(f"小説の生成中にエラーが発生しました: {result.get('error', '不明なエラー')}")
-            return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), synopsis_index=synopsis_index, style=style)
+            return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), synopsis_index=synopsis_index, style=style, model=model, available_models=AVAILABLE_MODELS)
         
         # 強化オプションがONの場合は強化処理
         if any([enhance_psychology, enhance_emotions, enhance_sensory, enhance_voice, add_psychological_themes]):
@@ -184,9 +198,9 @@ def story():
             if "error" not in enhanced_result:
                 result = enhanced_result
         
-        return render_template('story.html', story=result, synopsis_index=synopsis_index, style=style, enhanced=True)
+        return render_template('story.html', story=result, synopsis_index=synopsis_index, style=style, model=model, enhanced=True, available_models=AVAILABLE_MODELS)
     
-    return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), style=session.get('style', 'murakami'))
+    return render_template('story.html', synopses=synopsis_data.get('synopses'), setting_id=synopsis_data.get('setting_id'), style=session.get('style', 'murakami'), model=session.get('model', 'grok'), available_models=AVAILABLE_MODELS)
 
 # enhance_dialogルートを追加
 @app.route('/enhance_dialog/<story_id>', methods=['GET', 'POST'])
@@ -203,6 +217,7 @@ def enhance_dialog(story_id):
         preset = request.form.get('preset', 'extreme')
         intensity = int(request.form.get('intensity', 5))
         pattern_types = request.form.getlist('pattern_types')
+        model = request.form.get('model', session.get('model', 'grok'))  # モデル選択
         
         # パターンタイプが選択されていない場合はプリセットから取得
         if not pattern_types and preset in DIALOG_ENHANCEMENT_PRESETS:
@@ -212,19 +227,22 @@ def enhance_dialog(story_id):
             story_id=story_id,
             preset=preset,
             custom_patterns=pattern_types,
-            custom_intensity=intensity
+            custom_intensity=intensity,
+            model=model  # モデルパラメータを追加
         )
         
         if "error" in result:
             flash(f"セリフ強化中にエラーが発生しました: {result.get('error', '不明なエラー')}")
             return redirect(url_for('story', story_id=story_id))
         
-        return render_template('story.html', story=result, synopsis_index=0, style=story_data.get('style', 'murakami'), enhanced=True)
+        return render_template('story.html', story=result, synopsis_index=0, style=story_data.get('style', 'murakami'), model=model, enhanced=True, available_models=AVAILABLE_MODELS)
     
     return render_template('dialog_enhance.html', 
                           story=story_data, 
                           patterns=EROTIC_DIALOG_PATTERNS,
-                          presets=DIALOG_ENHANCEMENT_PRESETS)
+                          presets=DIALOG_ENHANCEMENT_PRESETS,
+                          model=session.get('model', 'grok'),
+                          available_models=AVAILABLE_MODELS)
 
 if __name__ == '__main__':
     os.makedirs('data/settings', exist_ok=True)

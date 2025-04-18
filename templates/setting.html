@@ -5,6 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>設定ジェネレーター | 官能小説ジェネレーター</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* モデル選択スタイル */
+        .model-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .model-tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .model-tab:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .model-tab.active {
+            border-color: #ddd;
+            border-bottom-color: white;
+            background-color: white;
+            border-top: 2px solid #4caf50;
+        }
+        
+        .model-description {
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            background-color: #f0f8f0;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .model-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .model-tab {
+                flex: 1 0 auto;
+                text-align: center;
+                margin-bottom: -1px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -22,6 +74,19 @@
                 
                 <form action="{{ url_for('setting') }}" method="post">
                     <div class="form-group">
+                        <label>使用モデル:</label>
+                        <div class="model-tabs">
+                            <div class="model-tab active" data-model="grok">Grok-3</div>
+                            <div class="model-tab" data-model="gemini">Gemini-2.5</div>
+                        </div>
+                        
+                        <div id="model-description" class="model-description">
+                            <!-- JavaScriptで動的に表示 -->
+                        </div>
+                        <input type="hidden" name="model" value="grok" id="model-input">
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="setting_type">設定タイプ:</label>
                         <select id="setting_type" name="setting_type" required>
                             <option value="一般">一般的な恋愛</option>
@@ -38,6 +103,18 @@
                         <textarea id="additional_details" name="additional_details" rows="4" placeholder="具体的な設定の要望や、特定のシチュエーションなどを入力してください"></textarea>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="style">文体スタイル:</label>
+                        <select id="style" name="style">
+                            <option value="murakami" selected>村上龍</option>
+                            <option value="dan">団鬼六</option>
+                            <option value="tanizaki">谷崎潤一郎</option>
+                            <option value="matayoshi">又吉直樹</option>
+                            <option value="higashino">東野圭吾</option>
+                            <option value="eromanga">エロ同人</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-actions">
                         <button type="submit" class="btn-primary">設定を生成する</button>
                     </div>
@@ -51,5 +128,49 @@
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // モデルの説明
+        const modelDescriptions = {
+            "grok": "X.AI社の最新言語モデルGrok-3を使用します。より創造的で大胆な表現が可能です。",
+            "gemini": "GoogleのGemini 2.5モデルを使用します。より洗練された文章構成と表現力が特徴です。"
+        };
+        
+        // モデルタブの初期化
+        function initModelTabs() {
+            const modelTabs = document.querySelectorAll('.model-tab');
+            const modelInput = document.getElementById('model-input');
+            const modelDesc = document.getElementById('model-description');
+            
+            if (modelTabs.length > 0) {
+                modelTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // タブの見た目を変更
+                        modelTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // モデル値を設定
+                        const model = this.getAttribute('data-model');
+                        modelInput.value = model;
+                        
+                        // 説明を表示
+                        if (modelDesc) {
+                            modelDesc.textContent = modelDescriptions[model] || '';
+                        }
+                    });
+                });
+                
+                // 初期表示
+                const activeTab = document.querySelector('.model-tab.active');
+                if (activeTab && modelDesc) {
+                    modelDesc.textContent = modelDescriptions[activeTab.getAttribute('data-model')] || '';
+                }
+            }
+        }
+        
+        // ページ読み込み時に初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initModelTabs();
+        });
+    </script>
 </body>
 </html>

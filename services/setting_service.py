@@ -3,8 +3,9 @@ import json
 import uuid
 import re
 import random
+import importlib
 from api import grok_api
-from config import WRITING_STYLES
+from config import WRITING_STYLES, AVAILABLE_MODELS
 
 # 日本人名リスト（一部）
 JAPANESE_MALE_NAMES = [
@@ -101,6 +102,17 @@ def extract_names_from_text(text):
 
 def generate_setting_from_scenario(model="grok", scenario=""):
     """シナリオテキストから設定を生成する"""
+    # モデル指定がない場合はgrokをデフォルトに
+    if not model in AVAILABLE_MODELS:
+        model = "grok"
+        
+    # APIモジュールの動的インポート
+    api_module_name = AVAILABLE_MODELS[model]["api_module"]
+    try:
+        api_module = importlib.import_module(f"api.{api_module_name}")
+    except ImportError:
+        return {"error": f"APIモジュール {api_module_name} のインポートに失敗しました"}
+    
     # シナリオからキャラクター名を抽出し、ランダムな名前に変換
     extracted_names = extract_names_from_text(scenario)
     name_mapping = {}
@@ -159,8 +171,8 @@ def generate_setting_from_scenario(model="grok", scenario=""):
     必ず完全かつ構文的に有効なJSONを返してください。性的表現は直接的かつ露骨に表現してください。
     """
     
-    # Grok API呼び出し
-    response = grok_api.generate_text(prompt, max_tokens=4000)
+    # API呼び出し
+    response = api_module.generate_text(prompt, max_tokens=4000)
     
     # レスポンスがAPIエラーメッセージを含むかチェック
     if response.startswith("エラーが発生"):
@@ -194,15 +206,23 @@ def generate_setting(model="grok", setting_type="一般", additional_details="")
     小説の設定を生成する
     
     Args:
-        model (str): 使用するモデル ('grok' のみサポート)
+        model (str): 使用するモデル ('grok', 'gemini')
         setting_type (str): 設定のタイプ
         additional_details (str): 追加の詳細
     
     Returns:
         dict: 生成された設定
     """
-    # モデルの強制
-    model = "grok"  # 現在はgrokのみサポート
+    # モデル指定がない場合はgrokをデフォルトに
+    if not model in AVAILABLE_MODELS:
+        model = "grok"
+        
+    # APIモジュールの動的インポート
+    api_module_name = AVAILABLE_MODELS[model]["api_module"]
+    try:
+        api_module = importlib.import_module(f"api.{api_module_name}")
+    except ImportError:
+        return {"error": f"APIモジュール {api_module_name} のインポートに失敗しました"}
     
     prompt = f"""
     あなたは官能小説の設定ジェネレーターです。以下の条件で魅力的で淫らな設定を作成してください。
@@ -241,8 +261,8 @@ def generate_setting(model="grok", setting_type="一般", additional_details="")
     必ず完全かつ構文的に有効なJSONを返してください。
     """
     
-    # Grok API呼び出し
-    response = grok_api.generate_text(prompt, max_tokens=3000)
+    # API呼び出し
+    response = api_module.generate_text(prompt, max_tokens=3000)
     
     # レスポンスがAPIエラーメッセージを含むかチェック
     if response.startswith("エラーが発生しました"):
@@ -322,6 +342,7 @@ def extract_json(text):
 def save_setting(setting_id, setting_data):
     """設定をファイルに保存する"""
     filepath = os.path.join("data", "settings", f"{setting_id}.json")
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(setting_data, f, ensure_ascii=False, indent=2)

@@ -7,12 +7,29 @@ load_dotenv()
 
 # API設定
 GROK_API_KEY = os.getenv("GROK_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")  # 追加：Gemini API キー
 
 # API URL設定
 GROK_API_URL = "https://api.x.ai/v1/chat/completions"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-03-25:generateContent"  # Gemini API URL
 
 # モデル設定
 GROK_MODEL = "grok-3-latest"
+GEMINI_MODEL = "gemini-2.5-pro-preview-03-25"
+
+# 利用可能なモデルリスト
+AVAILABLE_MODELS = {
+    "grok": {
+        "name": "Grok 3", 
+        "model_id": GROK_MODEL,
+        "api_module": "grok_api"
+    },
+    "gemini": {
+        "name": "Gemini 2.5 Pro", 
+        "model_id": GEMINI_MODEL,
+        "api_module": "gemini_api"
+    }
+}
 
 # 文体設定
 WRITING_STYLES = {
